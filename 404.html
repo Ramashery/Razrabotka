@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+    <script>
+      // Имя вашего репозитория
+      const repoName = '/Razrabotka';
+
+      // Сохраняем запрошенный путь (например, /ka/services/new-item-title3)
+      // в sessionStorage. Ваш скрипт в index.html его оттуда заберет.
+      const redirectPath = location.pathname.substring(repoName.length);
+      sessionStorage.redirect = redirectPath;
+
+      // Перенаправляем на главную страницу приложения (корень репозитория).
+      location.href = repoName;
+    </script>
+  </head>
+  <body>
+    <!-- Можно добавить сообщение для пользователей со старыми браузерами -->
+    <p>If you are not redirected automatically, follow this <a id="redirect-link" href="/Razrabotka">link</a>.</p>
+    <script>document.getElementById('redirect-link').href = repoName;</script>
+  </body>
+</html>
