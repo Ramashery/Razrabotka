@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<!-- lang будет установлен динамически -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO и OG мета-теги будут вставлены здесь динамически -->
+    <title>Digital Craft | Portfolio</title>
+    <meta name="description" content="Professional websites for small businesses">
+
+    <!-- ДОБАВЛЕННЫЙ СКРИПТ ДЛЯ КОРРЕКТНОЙ РАБОТЫ НА GITHUB PAGES -->
+    <script>
+      (function(){
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect != location.pathname) {
+          history.replaceState(null, null, (location.pathname.endsWith('/') ? location.pathname.slice(0, -1) : location.pathname) + redirect);
+        }
+      })();
+    </script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+
+    <!-- Three.js -->
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <style>
+        /* --- Global Variables --- */
+        :root {
+            --color-bg: #030409;
+            --color-text: #FFFFFF;
+            --color-accent: #b8d8e8;
+            --color-card: rgba(25, 29, 45, 0.4);
+            --color-border: rgba(184, 216, 232, 0.2);
+            --font-main: 'Cormorant Garamond', serif;
+            --header-height: 80px;
+        }
+
+        /* --- Base Styles --- */
+        body { margin: 0; padding: 0; font-family: var(--font-main); background-color: var(--color-bg); color: var(--color-text); -webkit-font-smoothing: antialiased; overflow-x: hidden; line-height: 1.6; }
+        h1, h2, h3 { font-weight: 600; letter-spacing: 0.5px; }
+        a { color: var(--color-accent); text-decoration: none; }
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--color-bg); display: flex; justify-content: center; align-items: center; z-index: 10000; transition: opacity 0.5s ease-out; }
+        .spinner { width: 50px; height: 50px; border: 3px solid var(--color-accent); border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        #webgl-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; }
+        
+        #custom-background-iframe {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            z-index: 0;
+            display: none;
+        }
+        
+        main { position: relative; z-index: 2; max-width: 1200px; margin: 0 auto; padding: 100px 30px; transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+        body.nav-is-open main { opacity: 0; transform: translateY(20px); pointer-events: none; }
+
+        /* --- Animation System --- */
+        section { margin-bottom: 120px; perspective: 1000px; }
+        .animated-container { opacity: 0; transform: translateX(-30px) rotate(-5deg); transition: all 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.1); }
+        .animated-container.active { opacity: 1; transform: none; }
+        @keyframes letterAppear { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: none; } }
+        .animated-text { color: transparent; }
+        .animated-text.is-animating { color: var(--color-text); }
+        .animated-text span { display: inline-block; opacity: 0; animation: letterAppear 0.5s forwards; }
+
+        /* --- Generic Cards --- */
+        .item-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 40px; }
+        .item-card { display: block; background: var(--color-card); border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .item-card:hover { transform: translateY(-10px) scale(1.02) !important; border-color: var(--color-accent); box-shadow: 0 10px 30px rgba(184, 216, 232, 0.3); }
+        .item-card__image { height: 200px; background: linear-gradient(135deg, rgba(184, 216, 232, 0.1), rgba(25, 29, 45, 0.7)); background-size: cover; background-position: center; opacity: 1; transition: opacity 0.8s ease-in-out; position: relative; overflow: hidden; }
+        .item-card__content { padding: 25px; }
+        .item-card h3 { margin: 0 0 10px; font-size: 1.5rem; transition: color 0.3s ease-out; color: var(--color-text); }
+        .item-card:hover h3 { color: var(--color-accent); }
+        .item-card .card-subtitle { display: block; margin-bottom: 15px; opacity: 0.8; font-size: 0.9rem; color: var(--color-text); }
+        .item-card p { margin: 0; opacity: 0.9; color: var(--color-text); }
+        
+        /* --- Modern Menu --- */
+        .menu-toggle { position: fixed; top: 30px; right: 30px; z-index: 1000; background: transparent; border: none; padding: 0; cursor: pointer; width: 30px; height: 24px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.4s; }
+        .menu-toggle:hover { transform: scale(1.1); }
+        .menu-toggle .bar { background: #FFFFFF; height: 2px; width: 100%; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); transform-origin: right; }
+        .menu-toggle.is-active .bar:nth-child(1) { transform: translateY(11px) rotate(-45deg); background: var(--color-accent); }
+        .menu-toggle.is-active .bar:nth-child(2) { opacity: 0; }
+        .menu-toggle.is-active .bar:nth-child(3) { transform: translateY(-11px) rotate(45deg); background: var(--color-accent); }
+        .nav-overlay { position: fixed; top: 0; right: -100%; width: 400px; height: 100vh; background: rgba(3, 4, 9, 0.8); backdrop-filter: blur(10px); z-index: 999; transition: right 0.6s cubic-bezier(0.77, 0, 0.175, 1); overflow: hidden; }
+        .nav-overlay.is-active { right: 0; }
+        .nav-menu { padding: 100px 40px; list-style: none; margin: 0; }
+        .nav-menu li { margin-bottom: 25px; opacity: 0; transform: translateX(30px); transition: all 0.4s ease-out; }
+        .nav-overlay.is-active .nav-menu li { opacity: 1; transform: translateX(0); }
+        .nav-menu li:nth-child(1) { transition-delay: 0.1s; } .nav-menu li:nth-child(2) { transition-delay: 0.2s; } .nav-menu li:nth-child(3) { transition-delay: 0.3s; } .nav-menu li:nth-child(4) { transition-delay: 0.4s; } .nav-menu li:nth-child(5) { transition-delay: 0.5s; } .nav-menu li:nth-child(6) { transition-delay: 0.6s; }
+        .nav-menu a { color: var(--color-text); font-size: 1.8rem; position: relative; padding-bottom: 5px; transition: all 0.3s ease-out; }
+        .nav-menu a:hover { color: var(--color-accent); transform: translateX(5px); }
+        .nav-menu a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px; background: var(--color-accent); transition: width 0.4s; }
+        .nav-menu a:hover::after { width: 100%; }
+
+        /* --- Hero Section --- */
+        .hero { min-height: 90vh; display: flex; flex-direction: column; justify-content: center; }
+        .hero h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); margin: 0 0 20px; line-height: 1.1; font-weight: 700; text-shadow: 0 0 15px rgba(184, 216, 232, 0.4); }
+        .hero p { font-size: 1.4rem; max-width: 600px; margin-bottom: 40px; }
+
+        /* --- Detail Page Styles --- */
+        .service-header { text-align: center; margin-bottom: 60px; }
+        .service-header h1 { font-size: clamp(2.5rem, 7vw, 4rem); margin: 0 0 10px; line-height: 1.1; font-weight: 700; text-shadow: 0 0 15px rgba(184, 216, 232, 0.4); }
+        .service-price { font-size: 1.2rem; color: var(--color-accent); letter-spacing: 1px; opacity: 0.9; }
+        .service-main-image { width: 100%; height: auto; max-height: 450px; border-radius: 8px; object-fit: cover; border: 1px solid var(--color-border); margin-bottom: 40px; }
+        .service-content { font-size: 1.15rem; opacity: 0.95; max-width: 800px; margin: 0 auto; }
+        .service-content p { margin-bottom: 1.5em; }
+        .service-content b, .service-content strong { color: var(--color-accent); font-weight: 600; }
+        .service-content a { text-decoration: underline; }
+        .service-gallery { margin-top: 60px; }
+        .service-gallery h2 { border-bottom: 1px solid var(--color-border); padding-bottom: 10px; margin-bottom: 30px; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .gallery-grid img { width: 100%; height: auto; border-radius: 4px; border: 1px solid var(--color-border); }
+        .gallery-grid iframe { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--color-border); border-radius: 4px; }
+        
+        /* --- Admin Panel Styles --- */
+        #admin-panel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 4, 9, 0.95); z-index: 10000; display: none; overflow-y: auto; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        #admin-panel.active { display: block; }
+        .admin-container { display: flex; min-height: 100vh; }
+        .admin-sidebar { width: 250px; background: rgba(25, 29, 45, 0.8); padding: 30px; border-right: 1px solid var(--color-border); position: sticky; top: 0; height: 100vh; }
+        .admin-sidebar h3 { margin-top: 0; }
+        .admin-sidebar ul { list-style: none; padding: 0; }
+        .admin-sidebar ul li { margin-bottom: 10px; }
+        .admin-content { flex: 1; padding: 40px; }
+        .admin-tabs { list-style: none; padding: 0; }
+        .admin-tab { padding: 10px 0; cursor: pointer; transition: all 0.3s; }
+        .admin-tab.active { color: var(--color-accent); font-weight: bold; }
+        .admin-tab:not(.active):hover { color: var(--color-accent); transform: translateX(5px); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        #admin-close-btn { position: absolute; top: 25px; right: 25px; background: none; border: none; color: var(--color-text); font-size: 2rem; cursor: pointer; transition: all 0.3s; line-height: 1; }
+        #admin-close-btn:hover { color: var(--color-accent); transform: rotate(90deg); }
+        .admin-section-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 15px; margin-bottom: 30px; }
+        .admin-item { background: var(--color-card); padding: 20px; border-radius: 8px; border: 1px solid var(--color-border); margin-bottom: 20px; }
+        .admin-item-content { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .admin-item-content h4 { margin: 15px 0 0; border-top: 1px solid var(--color-border); padding-top: 15px; color: var(--color-accent); }
+        .admin-item label { font-size: 0.9rem; opacity: 0.8; margin-bottom: -10px; }
+        .admin-item input, .admin-item textarea, .admin-item select { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--color-border); color: var(--color-text); padding: 10px; border-radius: 4px; font-family: inherit; font-size: 1rem; transition: all 0.3s; box-sizing: border-box; }
+        .admin-item input:disabled, .admin-item textarea:disabled, .admin-item select:disabled { background: transparent; border-color: transparent; color: var(--color-text); padding-left: 0; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+        .admin-item input:focus, .admin-item textarea:focus, .admin-item select:focus { border-color: var(--color-accent); background: rgba(0,0,0,0.4); }
+        .admin-item textarea { min-height: 80px; resize: vertical; line-height: 1.6; }
+        .admin-item-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+        .admin-btn { padding: 8px 16px; border: 1px solid var(--color-accent); background: rgba(184, 216, 232, 0.1); color: var(--color-accent); border-radius: 4px; cursor: pointer; transition: all 0.3s; }
+        .admin-btn:hover { background: rgba(184, 216, 232, 0.3); color: var(--color-text); }
+        .admin-btn.delete-btn { border-color: #e57373; color: #e57373; }
+        .admin-btn.delete-btn:hover { background: rgba(229, 115, 115, 0.3); color: var(--color-text); }
+        .admin-btn.save-btn { display: none; }
+        .admin-item.is-editing .edit-btn { display: none; }
+        .admin-item.is-editing .save-btn { display: inline-block; }
+        .admin-item.is-editing input, .admin-item.is-editing textarea, .admin-item.is-editing select { padding-left: 10px; }
+        .admin-item.is-editing select { -webkit-appearance: menulist; -moz-appearance: menulist; appearance: menulist; }
+
+        /* --- Responsive & Reduced Motion --- */
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } .animated-container { opacity: 1; transform: none; transition: none; } .animated-text span { opacity: 1; transform: none; animation: none; } }
+        @media (max-width: 768px) { .animated-container { transform: translateX(-15px) rotate(-2deg); } .nav-overlay { width: 100%; } .hero h1 { font-size: 2.5rem; } .item-grid { grid-template-columns: 1fr; } .admin-container { flex-direction: column; } .admin-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--color-border); position: static; height: auto; } .admin-content { padding: 20px; } }
+        @media (max-width: 480px) { main { padding: 60px 15px; } section { margin-bottom: 60px; } .hero h1 { font-size: 2rem; } .nav-menu { padding: 80px 20px; } .nav-menu a { font-size: 1.5rem; } }
+    </style>
+</head>
+<body>
+    <div id="loader"><div class="spinner"></div></div>
+
+    <canvas id="webgl-canvas"></canvas>
+    <iframe id="custom-background-iframe" title="Custom Background"></iframe>
+
+    <button class="menu-toggle" aria-label="Toggle menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+
+    <div class="nav-overlay">
+        <!-- Меню теперь будет заполнено динамически -->
+        <ul class="nav-menu"></ul>
+    </div>
+
+    <main></main>
+    
+    <div id="admin-panel">
+        <div class="admin-container">
+            <div class="admin-sidebar">
+                <h3>Admin Panel</h3>
+                <ul class="admin-tabs">
+                    <li class="admin-tab active" data-tab="home">Home Page</li>
+                    <li class="admin-tab" data-tab="services">Services</li>
+                    <li class="admin-tab" data-tab="portfolio">Portfolio</li>
+                    <li class="admin-tab" data-tab="blog">Blog</li>
+                    <li class="admin-tab" data-tab="contact">Contact</li>
+                </ul>
+            </div>
+            <div class="admin-content">
+                <button id="admin-close-btn" title="Close Admin Panel">&times;</button>
+                <div class="tab-content active" data-tab-content="home"></div>
+                <div class="tab-content" data-tab-content="services"></div>
+                <div class="tab-content" data-tab-content="portfolio"></div>
+                <div class="tab-content" data-tab-content="blog"></div>
+                <div class="tab-content" data-tab-content="contact"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        
+        // --- FIREBASE CONFIGURATION ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyAT4dDEIDUtzP60ibjahO06P75Q6h95ZN4",
+          authDomain: "razrabotka-b61bc.firebaseapp.com",
+          projectId: "razrabotka-b61bc",
+          storageBucket: "razrabotka-b61bc.firebasestorage.app",
+          messagingSenderId: "394402564794",
+          appId: "1:394402564794:web:f610ffb03e655c600c5083"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // --- LOCAL DATA CACHE & INITIAL DATA ---
+        let siteData = {};
+        const initialSiteData = {};
+        initialSiteData.home = {h1: "Crafting Digital Excellence",subtitle: "We create bespoke websites that elevate small businesses through elegant design and cutting-edge technology.",lang: "en",seoTitle: "Digital Craft | Custom Web Design for Small Businesses",metaDescription: "Digital Craft builds elegant, fast, and SEO-friendly websites. We help small businesses succeed online with unique design and cutting-edge tech.",schemaJsonLd: `{"@context": "https://schema.org","@type": "Organization","name": "Digital Craft","url": "https://example.com","logo": "https://example.com/logo.png","sameAs": ["https://www.facebook.com/yourprofile","https://www.twitter.com/yourprofile"]}`,ogTitle: "Digital Craft: We Build Websites That Perform",ogDescription: "From elegant portfolios to robust e-commerce stores, we craft digital experiences that drive results.",ogImage: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&h=630&auto=format&fit=crop", backgroundHtml: ""};
+        initialSiteData.services = [
+            {id: 'service-1', lang: 'en', urlSlug: 'web-development-services', title: 'Web Development', subtitle: 'From Landing Pages to E-Commerce',description: 'We build fast, responsive, and secure websites tailored to your needs.', h1: 'Bespoke Web Development Solutions',mainContent: 'Our development process focuses on <b>clean code, performance, and scalability.</b>',price: 'From $2,000', media: ['https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop'],mainImageAlt: 'Laptop showing lines of code for web development.', seoTitle: 'Custom Web Development Services | Digital Craft',metaDescription: 'Get professional, fast, and secure web development for your small business.',schemaJsonLd: `{}`, backgroundHtml: ""},
+            {id: 'service-2', lang: 'ka', urlSlug: 'veb-gamushaveba', title: 'ვებ დამუშავება (Web Dev)', subtitle: 'სადესანტო გვერდებიდან ელექტრონულ კომერციამდე',description: 'ჩვენ ვქმნით სწრაფ, საპასუხო და უსაფრთხო ვებსაიტებს.', h1: 'ვებ დამუშავების გადაწყვეტილებები',mainContent: 'ჩვენი განვითარების პროცესი ფოკუსირებულია <b>სუფთა კოდზე, შესრულებასა და მასშტაბურობაზე.</b>',price: '2,000 დოლარიდან', media: ['https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop'],mainImageAlt: 'კოდის ხაზები ვებ განვითარებისთვის', seoTitle: 'ვებ დამუშავების სერვისები | Digital Craft',metaDescription: 'მიიღეთ პროფესიონალური, სწრაფი და უსაფრთხო ვებ-გვერდის შემუშავება თქვენი მცირე ბიზნესისთვის.',schemaJsonLd: `{}`, backgroundHtml: ""}
+        ];
+        initialSiteData.portfolio = [{id: 'portfolio-1', lang: 'en', urlSlug: 'project-alpha', title: 'Project Alpha', subtitle: 'Corporate Website',description: 'A sleek, modern website for a leading tech consultant.', h1: 'Case Study: Project Alpha Corporate Redesign',mainContent: 'This project involved a complete redesign focusing on lead generation and clear communication of complex services.',price: 'Project Budget: $15,000', media: ['https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop'],mainImageAlt: 'Dashboard with charts and graphs showing project analytics.', seoTitle: 'Case Study: Project Alpha | Digital Craft',metaDescription: 'See how Digital Craft redesigned a corporate website for a tech consultant.', schemaJsonLd: `{}`, backgroundHtml: ""}];
+        initialSiteData.blog = [{id: 'article-1', lang: 'en', urlSlug: '10-principles-effective-web-design', title: '10 Principles of Effective Web Design', subtitle: 'June 15, 2024',description: 'Discover the fundamental principles that make websites both beautiful and functional.', h1: 'The 10 Core Principles of Highly Effective Web Design',mainContent: 'Good design is not just about aesthetics; it is about communication and usability.',price: '', media: ['https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=2070&auto=format&fit=crop'],mainImageAlt: 'A minimalist and modern desk setup.', seoTitle: '10 Principles of Effective Web Design | Digital Craft Blog',metaDescription: 'Learn the 10 core principles of modern web design.',schemaJsonLd: `{}`, backgroundHtml: ""}];
+        initialSiteData.contact = [{id: 'contact-1', lang: 'en', urlSlug: 'main-contact-info', title: 'Get in Touch', subtitle: "We're here to help.", description: "Reach us via email, phone, or our social media channels. Click to see details.", h1: "Contact Digital Craft", mainContent: "You can reach us via email at <b>hello@digitalcraft.com</b> or follow us on our social media channels. We look forward to hearing from you!", price: '', media: [], mainImageAlt: '', seoTitle: 'Contact Us | Digital Craft', metaDescription: 'Contact Digital Craft for web design services.', schemaJsonLd: '{}', backgroundHtml: ''}];
+        
+        // --- Определение базового пути для GitHub Pages ---
+        const isGitHubPages = window.location.hostname.includes('github.io');
+        const repoName = isGitHubPages ? window.location.pathname.split('/')[1] || '' : '';
+        const basePath = isGitHubPages && repoName ? `/${repoName}` : '';
+
+        // --- DATA MANAGEMENT ---
+        async function seedDatabaseIfEmpty() { 
+            const homeDoc = await db.collection('home').doc('content').get(); 
+            if (!homeDoc.exists) { 
+                console.log("Database is empty. Seeding with initial data..."); 
+                const batch = db.batch(); 
+                batch.set(db.collection('home').doc('content'), initialSiteData.home); 
+                for (const key of ['services', 'portfolio', 'blog', 'contact']) { 
+                    initialSiteData[key].forEach(item => { 
+                        const { id, ...data } = item;
+                        batch.set(db.collection(key).doc(id), data); 
+                    }); 
+                } 
+                await batch.commit(); 
+                console.log("Database seeded successfully."); 
+            } 
+        };
+        async function loadData() { 
+            try { 
+                await seedDatabaseIfEmpty(); 
+                const collections = ['services', 'portfolio', 'blog', 'contact']; 
+                const homeDoc = await db.collection('home').doc('content').get(); 
+                siteData.home = homeDoc.exists ? homeDoc.data() : {}; 
+                for (const col of collections) { 
+                    const snapshot = await db.collection(col).get(); 
+                    siteData[col] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
+                } 
+            } catch (error) { 
+                console.error("Error loading data from Firebase:", error); 
+                alert("Could not load site data."); 
+            } 
+        };
+        
+        // --- ROUTER AND RENDER LOGIC ---
+        const mainContentEl = document.querySelector('main');
+        const defaultLang = 'en';
+        
+        function formatContentHtml(content) {
+            if (!content) return '';
+            let processedContent = content.replace(/\r\n/g, '\n').trim();
+            const blocks = processedContent.split('\n\n');
+            const htmlBlocks = blocks.map(block => {
+                const trimmedBlock = block.trim();
+                if (/^<(p|div|h[1-6]|ul|ol|li|blockquote|hr|table|pre)/i.test(trimmedBlock)) {
+                    return trimmedBlock;
+                } else {
+                    return `<p>${trimmedBlock.replace(/\n/g, '<br>')}</p>`;
+                }
+            });
+            return htmlBlocks.join('');
+        }
+        
+        function routeAndRender() { 
+            const path = window.location.pathname; 
+            const pathWithoutBase = path.startsWith(basePath) ? path.substring(basePath.length) || '/' : path;
+            
+            const detailPageRegex = /^\/(?:([a-z]{2})\/)?(services|portfolio|blog|contact)\/([a-zA-Z0-9-]+)\/?$/;
+            const match = pathWithoutBase.match(detailPageRegex);
+
+            if (match) { 
+                const [, lang, collection, slug] = match;
+                const currentLang = lang || defaultLang;
+                renderDetailPage(collection, slug, currentLang);
+            } else { 
+                renderHomePage(); 
+            } 
+        };
+
+        function renderHomePage() { 
+            mainContentEl.innerHTML = `<section id="hero" class="hero"></section><section id="services"></section><section id="portfolio"></section><section id="blog"></section><section id="contact"></section>`; 
+            document.getElementById('admin-panel').style.display = ''; 
+            applyCustomBackground(); 
+            renderHomePageMeta(); 
+            renderHero(); 
+            
+            renderSection('services', 'Our Services', siteData.services); 
+            renderSection('portfolio', 'Our Work', siteData.portfolio); 
+            renderSection('blog', 'Latest Insights', siteData.blog); 
+            renderSection('contact', 'Get in Touch', siteData.contact);
+
+            initIntersectionObservers(); 
+            renderAdminPanel(); 
+        };
+
+        function renderDetailPage(collection, slug, lang) {
+            const item = siteData[collection]?.find(d => d.urlSlug === slug && d.lang === lang);
+            if (!item) {
+                mainContentEl.innerHTML = `<section class="service-header"><h1>404 - Not Found</h1><p>The page you were looking for does not exist.</p><a href="${basePath || '/'}">Go back home</a></section>`;
+                document.title = "404 Not Found | Digital Craft";
+                applyCustomBackground();
+                return;
+            }
+            document.getElementById('admin-panel').style.display = 'none';
+            document.documentElement.lang = lang;
+            applyCustomBackground(item);
+            updateMetaTags(item);
+            const mainImage = item.media?.find(url => !/youtube|vimeo/.test(url)) || '';
+            const videos = item.media?.filter(url => /youtube|vimeo/.test(url)) || [];
+            const images = item.media?.filter(url => !/youtube|vimeo/.test(url) && url !== mainImage) || [];
+            let galleryHTML = '';
+            if ((videos.length > 0 || images.length > 0)) {
+                const videosGrid = videos.map(url => `<div class="animated-container"><iframe src="${url.replace('watch?v=', 'embed/')}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`).join('');
+                const imagesGrid = images.map(url => `<div class="animated-container"><img src="${url}" alt="${item.mainImageAlt || item.h1}"></div>`).join('');
+                galleryHTML = `<section class="service-gallery"><h2 class="animated-container animated-text">Gallery & Media</h2><div class="gallery-grid">${videosGrid}${imagesGrid}</div></section>`;
+            }
+            const formattedContent = formatContentHtml(item.mainContent);
+            mainContentEl.innerHTML = `<section><div class="service-header animated-container"><h1 class="animated-text">${item.h1 || ''}</h1>${item.price ? `<div class="service-price animated-text">${item.price}</div>` : ''}</div>${mainImage ? `<img src="${mainImage}" alt="${item.mainImageAlt || item.h1}" class="service-main-image animated-container">` : ''}<div class="service-content animated-container">${formattedContent}</div></section>${galleryHTML}`;
+            initIntersectionObservers();
+        }
+
+        // --- DYNAMIC META TAGS & SEO HELPERS ---
+        function updateMetaTags(data = {}) {
+            document.querySelectorAll('meta[name="description"], meta[property^="og:"], script[type="application/ld+json"]').forEach(el => el.remove()); 
+            document.title = data.seoTitle || siteData.home.seoTitle || "Digital Craft"; 
+            const createMeta = (attr, key, value) => { if(value){ const meta = document.createElement('meta'); meta.setAttribute(attr, key); meta.content = value; document.head.appendChild(meta); }}; 
+            createMeta('name', 'description', data.metaDescription || siteData.home.metaDescription); 
+            createMeta('property', 'og:title', data.ogTitle || data.seoTitle || siteData.home.ogTitle); 
+            createMeta('property', 'og:description', data.ogDescription || data.metaDescription || siteData.home.ogDescription); 
+            const ogImage = data.media?.find(url => !/youtube|vimeo/.test(url)) || data.ogImage || siteData.home.ogImage; 
+            if (ogImage) createMeta('property', 'og:image', ogImage); 
+            if (data.schemaJsonLd && data.schemaJsonLd.trim() !== '{}') { 
+                try { 
+                    JSON.parse(data.schemaJsonLd); 
+                    const script = document.createElement('script'); 
+                    script.type = 'application/ld+json'; 
+                    script.textContent = data.schemaJsonLd; 
+                    document.head.appendChild(script); 
+                } catch(e) { console.error(`Could not parse Schema JSON-LD for ${data.title}`, e); } 
+            }
+        };
+        function renderHomePageMeta() { updateMetaTags(siteData.home); document.documentElement.lang = siteData.home?.lang || 'en'; };
+
+        // --- RENDER FUNCTIONS ---
+        function renderMenu() {
+            const menuEl = document.querySelector('.nav-menu');
+            if (!menuEl) return;
+            // ИЗМЕНЕНИЕ: Ссылка "Home" теперь привязана к якорю #hero для прокрутки к началу страницы.
+            const menuItems = [
+                { label: 'Home', href: `${basePath}/#hero` },
+                { label: 'Services', href: `${basePath}/#services` },
+                { label: 'Portfolio', href: `${basePath}/#portfolio` },
+                { label: 'Blog', href: `${basePath}/#blog` },
+                { label: 'Contact', href: `${basePath}/#contact` },
+                { label: 'Admin', href: '#', id: 'admin-toggle' }
+            ];
+
+            menuEl.innerHTML = menuItems.map(item => `
+                <li><a href="${item.href}" ${item.id ? `id="${item.id}"` : ''}>${item.label}</a></li>
+            `).join('');
+        }
+
+        function renderHero() { const { h1, subtitle } = siteData.home; document.getElementById('hero').innerHTML = `<h1 class="animated-container animated-text">${h1 || ''}</h1><p class="animated-container animated-text">${subtitle || ''}</p>`;};
+        
+        function renderSection(key, title, items) { 
+            const section = document.getElementById(key); 
+            if (!section) return; 
+            const itemsHTML = (items || []).map(item => {
+                const langPrefix = item.lang ? `/${item.lang}` : '';
+                const itemUrl = `${basePath}${langPrefix}/${key}/${item.urlSlug}`;
+                return `<a href="${itemUrl}" class="item-card animated-container"><div class="item-card__image" style="background-image: url('${(item.media || []).find(url => !/youtube|vimeo/.test(url)) || ''}')"></div><div class="item-card__content"><h3 class="animated-text">${item.title}</h3><div class="card-subtitle animated-text">${item.subtitle}</div><p class="animated-text">${item.description}</p></div></a>`
+            }).join(''); 
+            section.innerHTML = `<div class="animated-container"><h2 class="animated-text">${title}</h2></div><div class="item-grid">${itemsHTML}</div>`; 
+        };
+        
+        // --- ADMIN PANEL FUNCTIONS ---
+        function renderAdminPanel() { 
+            renderAdminHome(); 
+            renderAdminSection('services'); 
+            renderAdminSection('portfolio'); 
+            renderAdminSection('blog'); 
+            renderAdminSection('contact'); 
+        };
+        function renderAdminHome() { 
+            const container = document.querySelector('.tab-content[data-tab-content="home"]'); 
+            if(!container) return; 
+            const data = siteData.home || {}; 
+            container.innerHTML = `<div class="admin-section-header"><h2>Home Page Content & SEO</h2></div><div class="admin-item" id="admin-home-item"><div class="admin-item-content"><h4>Visible Content</h4><label for="home-h1">Main Header (H1)</label><input type="text" id="home-h1" value="${data.h1 || ''}" disabled><label for="home-subtitle">Subtitle</label><textarea id="home-subtitle" rows="3" disabled>${data.subtitle || ''}</textarea><h4>Critical SEO</h4><label for="home-lang">Language (e.g., en, ru)</label><input type="text" id="home-lang" value="${data.lang || 'en'}" disabled><label for="home-seoTitle">SEO Title Tag (&lt; 60 chars)</label><input type="text" id="home-seoTitle" value="${data.seoTitle || ''}" disabled><label for="home-metaDescription">Meta Description (&lt; 160 chars)</label><textarea id="home-metaDescription" rows="3" disabled>${data.metaDescription || ''}</textarea><h4>Schema.org for Organization</h4><label>JSON-LD Code</label><textarea id="home-schemaJsonLd" rows="8" disabled>${data.schemaJsonLd || '{}'}</textarea><h4>Social Media Sharing (Open Graph)</h4><label for="home-ogTitle">OG Title</label><input type="text" id="home-ogTitle" value="${data.ogTitle || ''}" disabled><label for="home-ogDescription">OG Description</label><textarea id="home-ogDescription" rows="3" disabled>${data.ogDescription || ''}</textarea><label for="home-ogImage">OG Image URL (1200x630px recommended)</label><input type="text" id="home-ogImage" value="${data.ogImage || ''}" disabled><h4>Custom Background</h4><label for="home-backgroundHtml">Custom Background HTML/JS/CSS (leave empty for default animation)</label><textarea id="home-backgroundHtml" rows="10" disabled>${data.backgroundHtml || ''}</textarea></div><div class="admin-item-actions"><button class="admin-btn edit-btn" data-action="edit-home">Edit</button><button class="admin-btn save-btn" data-action="save-home">Save</button></div></div>`;
+        };
+        
+        function renderAdminSection(key) { 
+            const container = document.querySelector(`.tab-content[data-tab-content="${key}"]`); 
+            if(!container) return; 
+            const title = key.charAt(0).toUpperCase() + key.slice(1); 
+            const itemsHTML = (siteData[key] || []).map(item => `
+            <div class="admin-item" data-id="${item.id}" data-key="${key}">
+                <div class="admin-item-content">
+                    <h4>Card Content (On Home Page)</h4>
+                    <label>Card Title</label><input type="text" class="admin-input-title" value="${item.title || ''}" disabled>
+                    <label>Card Subtitle / Date</label><input type="text" class="admin-input-subtitle" value="${item.subtitle || ''}" disabled>
+                    <label>Card Description</label><textarea class="admin-input-description" rows="3" disabled>${item.description || ''}</textarea>
+                    
+                    <h4>Detailed Page Content</h4>
+                    <label>Language</label>
+                    <select class="admin-input-lang" disabled>
+                        <option value="en" ${item.lang === 'en' ? 'selected' : ''}>English (en)</option>
+                        <option value="ru" ${item.lang === 'ru' ? 'selected' : ''}>Русский (ru)</option>
+                        <option value="ka" ${item.lang === 'ka' ? 'selected' : ''}>Georgian (ka)</option>
+                    </select>
+                    <label>Page URL Slug</label><input type="text" class="admin-input-urlSlug" value="${item.urlSlug || ''}" disabled>
+                    <label>Page Main Header (H1)</label><input type="text" class="admin-input-h1" value="${item.h1 || ''}" disabled>
+                    <label>Price / Budget</label><input type="text" class="admin-input-price" value="${item.price || ''}" disabled>
+                    <label>Main Page Content (Supports HTML and paragraph breaks)</label><textarea class="admin-input-mainContent" rows="8" disabled>${item.mainContent || ''}</textarea>
+                    <label>Media (URLs, one per line)</label><textarea class="admin-input-media" rows="4" disabled>${(item.media || []).join('\n')}</textarea>
+                    <label>Main Image Alt Text</label><input type="text" class="admin-input-mainImageAlt" value="${item.mainImageAlt || ''}" disabled>
+                    
+                    <h4>SEO & Metadata</h4>
+                    <label>SEO Title Tag</label><input type="text" class="admin-input-seoTitle" value="${item.seoTitle || ''}" disabled>
+                    <label>Meta Description</label><textarea class="admin-input-metaDescription" rows="3" disabled>${item.metaDescription || ''}</textarea>
+                    <label>Schema.org JSON-LD</label><textarea class="admin-input-schemaJsonLd" rows="5" disabled>${item.schemaJsonLd || '{}'}</textarea>
+                    
+                    <h4>Custom Background</h4>
+                    <label>Custom Page Background HTML/JS/CSS</label><textarea class="admin-input-backgroundHtml" rows="6" disabled>${item.backgroundHtml || ''}</textarea>
+                </div>
+                <div class="admin-item-actions">
+                    <button class="admin-btn edit-btn" data-action="edit">Edit</button>
+                    <button class="admin-btn save-btn" data-action="save">Save</button>
+                    <button class="admin-btn delete-btn" data-action="delete">Delete</button>
+                </div>
+            </div>`).join(''); 
+            container.innerHTML = `<div class="admin-section-header"><h2>Manage ${title}</h2><button class="admin-btn" data-action="add" data-key="${key}">+ Add New</button></div>${itemsHTML}`;
+        };
+        async function handleAdminActions(e) {
+            const target = e.target;
+            const action = target.dataset.action;
+            if (!action) return;
+            const itemEl = target.closest('.admin-item');
+            const setEditingState = (el, isEditing) => {
+                el.classList.toggle('is-editing', isEditing);
+                el.querySelectorAll('input, textarea, select').forEach(input => input.disabled = !isEditing);
+            };
+            try {
+                if (action === 'edit-home') { setEditingState(itemEl, true); return; }
+                if (action === 'save-home') {
+                    setEditingState(itemEl, false);
+                    const updatedData = {
+                        h1: itemEl.querySelector('#home-h1').value,
+                        subtitle: itemEl.querySelector('#home-subtitle').value,
+                        lang: itemEl.querySelector('#home-lang').value,
+                        seoTitle: itemEl.querySelector('#home-seoTitle').value,
+                        metaDescription: itemEl.querySelector('#home-metaDescription').value,
+                        schemaJsonLd: itemEl.querySelector('#home-schemaJsonLd').value,
+                        ogTitle: itemEl.querySelector('#home-ogTitle').value,
+                        ogDescription: itemEl.querySelector('#home-ogDescription').value,
+                        ogImage: itemEl.querySelector('#home-ogImage').value,
+                        backgroundHtml: itemEl.querySelector('#home-backgroundHtml').value,
+                    };
+                    await db.collection('home').doc('content').update(updatedData);
+                    await loadData();
+                    routeAndRender();
+                    alert('Home page updated!');
+                    return;
+                }
+                
+                const key = target.dataset.key || itemEl.dataset.key;
+                const id = itemEl ? itemEl.dataset.id : null;
+                switch(action) {
+                    case 'edit': setEditingState(itemEl, true); break;
+                    case 'save': {
+                        setEditingState(itemEl, false);
+                        const updatedData = {
+                            lang: itemEl.querySelector('.admin-input-lang').value,
+                            title: itemEl.querySelector('.admin-input-title').value,
+                            subtitle: itemEl.querySelector('.admin-input-subtitle').value,
+                            description: itemEl.querySelector('.admin-input-description').value,
+                            urlSlug: itemEl.querySelector('.admin-input-urlSlug').value.trim(),
+                            h1: itemEl.querySelector('.admin-input-h1').value,
+                            price: itemEl.querySelector('.admin-input-price').value,
+                            mainContent: itemEl.querySelector('.admin-input-mainContent').value,
+                            media: itemEl.querySelector('.admin-input-media').value.split('\n').map(s => s.trim()).filter(Boolean),
+                            mainImageAlt: itemEl.querySelector('.admin-input-mainImageAlt').value,
+                            seoTitle: itemEl.querySelector('.admin-input-seoTitle').value,
+                            metaDescription: itemEl.querySelector('.admin-input-metaDescription').value,
+                            schemaJsonLd: itemEl.querySelector('.admin-input-schemaJsonLd').value,
+                            backgroundHtml: itemEl.querySelector('.admin-input-backgroundHtml').value,
+                        };
+                        await db.collection(key).doc(id).update(updatedData);
+                        await loadData();
+                        routeAndRender();
+                        alert('Item saved!');
+                        break;
+                    }
+                    case 'delete':
+                        if (confirm('Are you sure you want to delete this item?')) {
+                            await db.collection(key).doc(id).delete();
+                            await loadData();
+                            routeAndRender();
+                            alert('Item deleted!');
+                        }
+                        break;
+                    case 'add':
+                        const newId = `${key.slice(0, -1)}-${Date.now()}`;
+                        const newTitle = 'New Item Title';
+                        const newSlug = newTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                        const newItemData = {
+                            lang: defaultLang,
+                            urlSlug: newSlug,
+                            title: newTitle,
+                            subtitle: 'New Subtitle',
+                            description: 'A short description for the card.',
+                            h1: newTitle,
+                            mainContent: 'Full content for the detailed page.\n\nHTML and paragraph breaks are supported!',
+                            price: '',
+                            media: [],
+                            mainImageAlt: '',
+                            seoTitle: newTitle,
+                            metaDescription: '',
+                            schemaJsonLd: '{}',
+                            backgroundHtml: ''
+                        };
+                        await db.collection(key).doc(newId).set(newItemData);
+                        await loadData();
+                        routeAndRender();
+                        alert('New item added. You can now edit it.');
+                        break;
+                }
+            } catch(error) { console.error("Admin action failed:", error); alert("An error occurred. Please check the console."); }
+        };
+
+        // --- ANIMATION LOGIC ---
+        let observer;
+        function animateTextLetters(element) { 
+            if (!element || element.dataset.animated) return; 
+            element.dataset.animated = true; 
+            element.classList.add('is-animating'); 
+            const text = element.textContent.trim(); 
+            element.innerHTML = ''; 
+            const words = text.split(/\s+/); 
+            words.forEach((word, wordIndex) => { 
+                const wordWrapper = document.createElement('span'); 
+                wordWrapper.style.display = 'inline-block'; 
+                word.split('').forEach((char) => { 
+                    const span = document.createElement('span'); 
+                    span.textContent = char; 
+                    span.style.animationDelay = `${Math.random() * 0.5}s`; 
+                    wordWrapper.appendChild(span); 
+                }); 
+                element.appendChild(wordWrapper); 
+                if (wordIndex < words.length - 1) { 
+                    element.appendChild(document.createTextNode(' ')); 
+                } 
+            }); 
+        };
+        function activateContainer(container) { 
+            if (container.classList.contains('active')) return; 
+            container.classList.add('active'); 
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; 
+            if (prefersReducedMotion) { 
+                container.querySelectorAll('.animated-text').forEach(animateTextLetters); 
+                return; 
+            } 
+            setTimeout(() => { 
+                if (container.classList.contains('animated-text')) { 
+                    animateTextLetters(container); 
+                } else { 
+                    container.querySelectorAll('.animated-text').forEach(animateTextLetters); 
+                } 
+            }, 300); 
+        };
+        function initIntersectionObservers() { 
+            if (observer) observer.disconnect(); 
+            observer = new IntersectionObserver((entries, obs) => { 
+                entries.forEach(entry => { 
+                    if (entry.isIntersecting) { 
+                        const section = entry.target; 
+                        const containers = section.querySelectorAll('.animated-container'); 
+                        containers.forEach((container, index) => { 
+                            setTimeout(() => activateContainer(container), index * 150); 
+                        }); 
+                        obs.unobserve(section); 
+                    } 
+                }); 
+            }, { threshold: 0.1 }); 
+            document.querySelectorAll("main > section").forEach(section => observer.observe(section)); 
+        };
+
+        // --- THREE.JS SCENE ---
+        let defaultAnimationEnabled = true;
+        let animationFrameId;
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); 
+        camera.position.z = 5; 
+        const canvas = document.getElementById("webgl-canvas"); 
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true }); 
+        renderer.setSize(window.innerWidth, window.innerHeight); 
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
+        scene.add(new THREE.AmbientLight(0x404040, 2)); 
+        const pointLight1 = new THREE.PointLight(0x00aaff, 30, 20); 
+        pointLight1.position.set(5, 5, 5); 
+        scene.add(pointLight1); 
+        const crystalGroup = new THREE.Group(); 
+        scene.add(crystalGroup); 
+        let crystalMaterial = new THREE.ShaderMaterial({ uniforms: { time: { value: 0 }, color1: { value: new THREE.Color(0xb8d8e8) }, color2: { value: new THREE.Color(0x1d2a3a) }, }, vertexShader: `varying vec3 vNormal; varying vec3 vPosition; void main() { vNormal = normalize(normalMatrix * normal); vPosition = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float time; uniform vec3 color1; uniform vec3 color2; varying vec3 vNormal; float snoise(vec3 v){ const vec2 C = vec2(1.0/6.0, 1.0/3.0) ; const vec4 D = vec4(0.0, 0.5, 1.0, 2.0); vec3 i = floor(v + dot(v, C.yyy) ); vec3 x0 = v - i + dot(i, C.xxx) ; vec3 g = step(x0.yzx, x0.xyz); vec3 l = 1.0 - g; vec3 i1 = min( g.xyz, l.zxy ); vec3 i2 = max( g.xyz, l.zxy ); vec3 x1 = x0 - i1 + C.xxx; vec3 x2 = x0 - i2 + C.yyy; vec3 x3 = x0 - D.yyy; i = mod(i, 289.0); vec4 p = mod(((i.z + vec4(0.0, i1.z, i2.z, 1.0 ))*34.0+1.0)* (i.z + vec4(0.0, i1.z, i2.z, 1.0 )) + i.y + vec4(0.0, i1.y, i2.y, 1.0 ), 289.0); p = mod(((p)*34.0+1.0)*(p) + i.x + vec4(0.0, i1.x, i2.x, 1.0 ), 289.0); vec4 j = p - 49.0 * floor(p * (1.0/7.0) * (1.0/7.0)); vec4 x_ = floor(j * (1.0/7.0)); vec4 y_ = floor(j - 7.0 * x_ ); vec4 x = x_ * (2.0/7.0) - 1.0 + (1.0/7.0); vec4 y = y_ * (2.0/7.0) - 1.0 + (1.0/7.0); vec4 h = 1.0 - abs(x) - abs(y); vec4 b0 = vec4( x.xy, y.xy ); vec4 b1 = vec4( x.zw, y.zw ); vec4 s0 = floor(b0)*2.0 + 1.0; vec4 s1 = floor(b1)*2.0 + 1.0; vec4 sh = -step(h, vec4(0.0)); vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ; vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ; vec3 p0 = vec3(a0.xy,h.x); vec3 p1 = vec3(a0.zw,h.y); vec3 p2 = vec3(a1.xy,h.z); vec3 p3 = vec3(a1.zw,h.w); vec4 norm = inversesqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3))); p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w; vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0); m = m * m; return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) ); } void main() { float noise = snoise(vNormal * 3.0 + time * 0.1); vec3 baseColor = mix(color1, color2, vNormal.y * 0.5 + 0.5); float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.0); vec3 finalColor = baseColor + fresnel * vec3(0.8, 0.9, 1.0) * 0.5; finalColor += noise * 0.2; gl_FragColor = vec4(finalColor, fresnel * 0.8 + 0.2); }`, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, }); 
+        const coreCrystal = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8, 1), crystalMaterial); 
+        crystalGroup.add(coreCrystal); 
+        let branches = []; 
+        let crystalGrowth = 0; 
+        const addBranch = () => { if (branches.length > 50) return; const branch = new THREE.Mesh(new THREE.IcosahedronGeometry(0.1 + Math.random() * 0.4, 0), crystalMaterial); const phi = Math.random() * Math.PI * 2, theta = Math.acos(Math.random() * 2 - 1), radius = 1 + Math.random() * crystalGrowth; branch.position.set( radius * Math.sin(theta) * Math.cos(phi), radius * Math.sin(theta) * Math.sin(phi), radius * Math.cos(theta) ); branch.rotation.set(Math.random(), Math.random(), Math.random()); branch.scale.set(0.01, 0.01, 0.01); crystalGroup.add(branch); branches.push({ mesh: branch, life: 0, maxLife: 0.5 + Math.random() * 1.5 }); }; 
+        const clock = new THREE.Clock(); 
+        let scrollFraction = 0, introComplete = false; 
+        const introDuration = 5; 
+        function animate() { 
+            animationFrameId = requestAnimationFrame(animate); 
+            if (!defaultAnimationEnabled) return; 
+            const elapsedTime = clock.getElapsedTime(); 
+            crystalMaterial.uniforms.time.value = elapsedTime; 
+            let introProgress = introComplete ? 1.0 : Math.min(elapsedTime / introDuration, 1.0); 
+            if (introProgress >= 1.0) introComplete = true; 
+            crystalGrowth = Math.max(introProgress * 1.5, Math.min(scrollFraction * 5, 2.5)); 
+            if (crystalGrowth > 0.1 && Math.random() > 0.9) addBranch(); 
+            camera.position.z = 5 - Math.max(introProgress * 1.0, scrollFraction * 2); 
+            camera.position.y = scrollFraction * 1; 
+            camera.lookAt(scene.position); 
+            crystalGroup.rotation.y += 0.001; 
+            crystalGroup.rotation.x += 0.0005; 
+            coreCrystal.scale.setScalar(1 + crystalGrowth * 0.5); 
+            branches.forEach(b => { if (b.life < b.maxLife) { b.life += 0.01; b.mesh.scale.setScalar(Math.sin(b.life / b.maxLife * Math.PI * 0.5)); } }); 
+            renderer.render(scene, camera); 
+        } 
+        window.addEventListener("scroll", () => { const scrollableHeight = document.body.scrollHeight - window.innerHeight; scrollFraction = scrollableHeight > 0 ? window.scrollY / scrollableHeight : 0; }); 
+        window.addEventListener("resize", () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+        // --- APP INITIALIZATION AND NAVIGATION HANDLING ---
+        function handleNavigation(e) { 
+            const link = e.target.closest('a'); 
+            if (!link || link.target === '_blank' || link.protocol !== window.location.protocol || link.host !== window.location.host || e.metaKey || e.ctrlKey || e.shiftKey) { return; } 
+            
+            const linkUrl = new URL(link.href);
+            const isAnchorLink = !!linkUrl.hash;
+
+            if (isAnchorLink) {
+                e.preventDefault();
+                const targetPath = linkUrl.pathname;
+                const currentPath = window.location.pathname;
+                const targetElementId = linkUrl.hash.substring(1);
+                
+                const scrollToElement = () => {
+                    const element = document.getElementById(targetElementId);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                    }
+                };
+
+                if (targetPath === currentPath) {
+                    scrollToElement();
+                } else {
+                    window.history.pushState({}, '', targetPath);
+                    routeAndRender();
+                    setTimeout(scrollToElement, 100);
+                }
+                return;
+            }
+
+            if (linkUrl.href === window.location.href) {
+                 e.preventDefault(); 
+                 return;
+            }
+
+            e.preventDefault(); 
+            window.history.pushState({}, '', linkUrl.pathname + linkUrl.search + linkUrl.hash); 
+            routeAndRender(); 
+            window.scrollTo(0, 0); 
+        };
+        function initStaticEventListeners() { 
+            document.body.addEventListener('click', handleNavigation); 
+            window.addEventListener('popstate', routeAndRender); 
+            const menuToggle = document.querySelector('.menu-toggle'); 
+            const navOverlay = document.querySelector('.nav-overlay'); 
+            menuToggle.addEventListener('click', (e) => { e.stopPropagation(); document.body.classList.toggle('nav-is-open'); menuToggle.classList.toggle('is-active'); navOverlay.classList.toggle('is-active'); }); 
+            
+            navOverlay.addEventListener('click', (e) => { 
+                const link = e.target.closest('a');
+                if (link && link.id === 'admin-toggle') {
+                     e.preventDefault();
+                     e.stopPropagation();
+                     document.getElementById('admin-panel').classList.add('active');
+                     return; 
+                }
+                if (link || e.target === navOverlay) { 
+                    document.body.classList.remove('nav-is-open'); 
+                    menuToggle.classList.remove('is-active'); 
+                    navOverlay.classList.remove('is-active'); 
+                } 
+            }); 
+
+            document.getElementById('admin-close-btn').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('admin-panel').classList.remove('active');}); 
+            document.querySelector('.admin-content').addEventListener('click', e => { e.stopPropagation(); handleAdminActions(e); }); 
+            document.querySelector('.admin-tabs').addEventListener('click', e => { e.stopPropagation(); if (e.target.matches('.admin-tab')) { document.querySelectorAll('.admin-tab, .tab-content').forEach(el => el.classList.remove('active')); e.target.classList.add('active'); document.querySelector(`.tab-content[data-tab-content="${e.target.dataset.tab}"]`).classList.add('active'); } }); 
+        };
+        
+        function applyCustomBackground(item = null) {
+            const iframe = document.getElementById('custom-background-iframe');
+            const defaultCanvas = document.getElementById('webgl-canvas');
+            let customCode = item?.backgroundHtml || siteData.home?.backgroundHtml || '';
+
+            if (customCode.trim() !== "") {
+                defaultCanvas.style.display = 'none';
+                iframe.style.display = 'block';
+                iframe.srcdoc = customCode;
+                defaultAnimationEnabled = false;
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+            } else {
+                iframe.style.display = 'none';
+                iframe.srcdoc = '';
+                defaultCanvas.style.display = 'block';
+                if (!defaultAnimationEnabled) {
+                    defaultAnimationEnabled = true;
+                    animate(); 
+                }
+            }
+        }
+
+        function initApp() {
+            document.getElementById('loader').style.opacity = '0';
+            setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+            
+            renderMenu();
+            initStaticEventListeners();
+
+            loadData().then(() => {
+                routeAndRender();
+                if (defaultAnimationEnabled) {
+                    animate();
+                }
+            });
+        }
+        window.addEventListener('load', initApp);
+
+    </script>
+</body>
+</html>
