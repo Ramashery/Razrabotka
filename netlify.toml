@@ -1,0 +1,18 @@
+# netlify.toml
+
+# Увеличиваем лимит времени на всю сборку до 15 минут
+[build]
+  command = "npm install && npm run build && npm run prerender"
+  publish = "dist" 
+  # Добавляем настройку времени
+  [build.environment]
+    NODE_VERSION = "18"
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
+    # Увеличиваем тайм-аут для самой команды сборки
+    COMMAND_TIMEOUT = "900" # 15 минут в секундах
+
+# Это правило для корректной работы SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
