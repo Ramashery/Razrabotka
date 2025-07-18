@@ -1,0 +1,27 @@
+{
+  "name": "digital-craft-portfolio",
+  "version": "1.0.0",
+  "description": "Portfolio website with prerendering for SEO",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "prerender": "node prerender.js"
+  },
+  "keywords": [
+    "portfolio",
+    "tbilisi",
+    "web-development"
+  ],
+  "author": "Your Name",
+  "license": "ISC",
+  "dependencies": {
+    "firebase-admin": "^12.1.0",
+    "fs-extra": "^11.2.0",
+    "puppeteer": "^22.10.0",
+    "three": "^0.165.0",
+    "vite": "^5.2.11"
+  }
+}
