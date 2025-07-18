@@ -1,0 +1,18 @@
+# netlify.toml
+
+# Увеличиваем лимит времени на всю сборку до 30 минут
+[build]
+  command = "npm install && npm run build && npm run prerender"
+  publish = "dist" 
+  # Добавляем настройку времени
+  [build.environment]
+    NODE_VERSION = "18"
+    COMMAND_TIMEOUT = "1800" # <--- ВОТ ЭТО ИЗМЕНЕНИЕ (30 минут в секундах)
+
+# Это правило для корректной работы SPA. 
+# Если пользователь перейдет по ссылке, которой нет в pre-render, 
+# сработает клиентский роутинг.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
