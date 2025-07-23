@@ -1,0 +1,8 @@
+# Эти правила предназначены для всех поисковых роботов.
+User-agent: *
+
+# Разрешить сканирование всего сайта.
+Allow: /
+
+# Указать путь к карте сайта.
+Sitemap: https://digital-craft-tbilisi.netlify.app/sitemap.xml
