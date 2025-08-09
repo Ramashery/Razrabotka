@@ -1,9 +1,0 @@
-# Файл: netlify.toml
-# Версия с использованием excluded_path
-
-[[edge_functions]]
-  path = "/*"
-  function = "prerender"
-  
-  # Используем свойство excluded_path для точного исключения файла
-  excluded_path = "/robots.txt"
