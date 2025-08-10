@@ -1,6 +1,0 @@
-# Файл: netlify.toml
-# Базовая конфигурация без исключений
-
-[[edge_functions]]
-  path = "/*"
-  function = "prerender"
