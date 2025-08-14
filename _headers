@@ -1,0 +1,20 @@
+# Правило по умолчанию для HTML страниц: не кешировать надолго.
+# Это важно, чтобы пользователи всегда видели свежую версию страницы.
+/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Правила для статичных файлов: кешировать "навечно".
+# Если вы измените файл, Netlify автоматически изменит его хеш, так что проблем не будет.
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+# Для всех популярных форматов изображений
+/*.(apng|avif|gif|jpg|jpeg|jfif|pjpeg|pjp|png|svg|webp)
+  Cache-Control: public, max-age=31536000, immutable
+
+# Для всех популярных форматов шрифтов
+/*.(woff|woff2)
+  Cache-Control: public, max-age=31536000, immutable
