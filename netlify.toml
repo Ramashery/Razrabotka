@@ -1,0 +1,26 @@
+# --- Единый конфигурационный файл netlify.toml ---
+
+# Правило для эффективного кэширования статических ресурсов (CSS, JS, картинки)
+# Ускоряет загрузку сайта для повторных посетителей.
+[[headers]]
+  for = "/assets/*" # Убедитесь, что путь к вашим ассетам верный
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+
+# --- Правила для редиректов ---
+# Убирают слэш в конце URL для SEO и единообразия.
+
+# Редирект для URL из трех частей, например /ru/blog/post/
+[[redirects]]
+  from = "/:lang/:section/:slug/"
+  to = "/:lang/:section/:slug"
+  status = 301
+  force = true
+
+# Редирект для URL из одной части, например /ru/
+[[redirects]]
+  from = "/:lang/"
+  to = "/:lang"
+  status = 301
+  force = true
