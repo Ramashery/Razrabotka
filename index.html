@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- --- SEO-ЗАГЛУШКИ --- -->
+    <title>Web Development &amp; SEO Services in Tbilisi, Georgia | Digital Craft</title>
+    <meta name="description" content="Loading professional web development and SEO services based in Tbilisi. We build high-performance websites for businesses.">
+    
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK (только необходимые для чтения данных) -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+
+    <!-- --- КРИТИЧЕСКИЙ CSS --- -->
+    <style>
+        :root {
+            --color-bg: #030409;
+            --color-text: #FFFFFF;
+            --color-accent: #b8d8e8;
+        }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: var(--color-bg); 
+            color: var(--color-text);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        #loader { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: var(--color-bg); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 10000; 
+            transition: opacity 0.5s ease-out; 
+        }
+        #loader.hidden { opacity: 0; pointer-events: none; }
+        .spinner { 
+            width: 50px; 
+            height: 50px; 
+            border: 3px solid var(--color-accent); 
+            border-radius: 50%; 
+            border-top-color: transparent; 
+            animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+
+    <!-- --- АСИНХРОННАЯ ЗАГРУЗКА ОСНОВНЫХ СТИЛЕЙ --- -->
+    <link rel="stylesheet" href="/styles.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/styles.css"></noscript>
+
+</head>
+<body>
+    <noscript>
+        <div><img src="https://mc.yandex.ru/watch/103413242" style="position:absolute; left:-9999px;" alt=""></div>
+        <h1>Digital Craft - Web Development &amp; SEO in Tbilisi</h1>
+        <p>We create professional, high-performance websites and provide SEO services for small and medium businesses in Tbilisi, Georgia. Contact us for a consultation.</p>
+        <a href="/en/services/web-development">Web Development</a>
+        <a href="/en/portfolio/example-project">Our Portfolio</a>
+    </noscript>
+
+    <div id="loader"><div class="spinner"></div></div>
+    <iframe id="custom-background-iframe" title="Custom Background"></iframe>
+    <button class="menu-toggle" aria-label="Toggle menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+    <div class="nav-overlay">
+        <ul class="nav-menu"></ul>
+    </div>
+
+    <main></main>
+    
+    <footer class="site-footer" id="site-footer"></footer>
+    
+    <!-- ОСНОВНОЙ СКРИПТ ПРИЛОЖЕНИЯ -->
+    <script type="module" src="/main.js"></script>
+    
+    <!-- 
+        СТАРАЯ СТРОКА <script src="metrika.js" defer=""></script> БЫЛА УДАЛЕНА.
+        ВМЕСТО НЕЕ НИЖЕ ВСТАВЛЕН БЛОК С ОТЛОЖЕННОЙ ЗАГРУЗКОЙ.
+    -->
+
+    <!-- Начало кода отложенной загрузки Яндекс.Метрики -->
+    <script type="text/javascript">
+        function loadYandexMetrika() {
+            (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+            (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+    
+            ym(103413242, "init", {
+                 clickmap:true,
+                 trackLinks:true,
+                 accurateTrackBounce:true,
+                 webvisor:true
+            });
+        }
+        // Запускаем загрузку Метрики с задержкой в 3 секунды (3000 миллисекунд)
+        setTimeout(loadYandexMetrika, 3000); 
+    </script>
+    <!-- Конец кода отложенной загрузки Яндекс.Метрики -->
+
+</body>
+</html>
