@@ -5,4 +5,4 @@ User-agent: *
 Allow: /
 
 # Указать путь к карте сайта.
-Sitemap: https://digital-craft-tbilisi.netlify.app/sitemap.xml
+Sitemap: https://digital-craft-tbilisi.site/sitemap.xml
