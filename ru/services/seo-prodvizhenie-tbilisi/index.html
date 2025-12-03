@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>SEO продвижение сайтов в Тбилиси | СЕО</title>
+    <meta name="description" content="Услуги SEO продвижения и оптимизации сайтов в Тбилиси. Поможем вашему бизнесу получать больше клиентов из поисковых систем Google и Яндекс.">
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="SEO Продвижение в Тбилиси: Выведите сайт в ТОП Google">
+    <meta property="og:description" content="Комплексное SEO для бизнеса в Грузии. Технический аудит, семантическое ядро и локальное продвижение. Увеличьте поток клиентов уже сегодня!">
+    <meta property="og:type" content="website">
+    <!-- Изображение для соцсетей (взято из Schema) -->
+    <meta property="og:image" content="https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=2070&auto=format&fit=crop">
+
+    <!-- Canonical Link (Важно: слэш в конце) -->
+    <link rel="canonical" href="https://digital-craft-tbilisi.site/ru/services/seo-prodvizhenie-tbilisi/" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- --- CRITICAL CSS --- -->
+    <style>
+        :root {
+            --color-bg: #030409;
+            --color-text: #FFFFFF;
+            --color-accent: #b8d8e8;
+            --color-card: rgba(25, 29, 45, 0.4);
+            --color-border: rgba(184, 216, 232, 0.2);
+            --font-main: 'Inter', sans-serif;
+        }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: var(--color-bg); 
+            color: var(--color-text);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        #loader { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: var(--color-bg); 
+            display: flex; justify-content: center; align-items: center; 
+            z-index: 10000; 
+            transition: opacity 0.5s ease-out; 
+        }
+        #loader.hidden { opacity: 0; pointer-events: none; }
+        .spinner { 
+            width: 50px; height: 50px; 
+            border: 3px solid var(--color-accent); 
+            border-radius: 50%; 
+            border-top-color: transparent; 
+            animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+
+    <!-- External Styles -->
+    <link rel="stylesheet" href="/styles.css">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": "SEO Продвижение сайтов в Тбилиси",
+      "serviceType": "SEO Продвижение",
+      "description": "Услуги SEO продвижения и оптимизации сайтов в Тбилиси. Поможем вашему бизнесу получать больше клиентов из поисковых систем Google и Яндекс.",
+      "image": "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=2070&auto=format&fit=crop",
+      "url": "https://digital-craft-tbilisi.site/ru/services/seo-prodvizhenie-tbilisi/",
+      "areaServed": {
+        "@type": "City",
+        "name": "Тбилиси"
+      },
+      "provider": {
+        "@type": "ProfessionalService",
+        "@id": "https://digital-craft-tbilisi.site/",
+        "name": "Digital Craft",
+        "url": "https://digital-craft-tbilisi.site/",
+        "logo": "https://digital-craft-tbilisi.site/favicon.svg",
+        "image": "https://digital-craft-tbilisi.site/favicon.svg",
+        "telephone": "+995 591 102 653",
+        "priceRange": "$$",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Tbilisi",
+          "addressCountry": "GE"
+        },
+        "sameAs": [
+            "https://wa.me/79119396075",
+            "https://t.me/ramashery"
+        ]
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "description": "Индивидуальный расчет стоимости"
+      }
+    }
+    </script>
+</head>
+
+<body data-static-page="true">
+
+    <div id="loader"><div class="spinner"></div></div>
+    
+    <iframe id="custom-background-iframe" title="Custom Background" style="display:none;"></iframe>
+    
+    <button class="menu-toggle" aria-label="Toggle menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+    
+    <div class="nav-overlay">
+        <ul class="nav-menu"></ul>
+    </div>
+
+    <main>
+        <section>
+            <div class="detail-page-header">
+                <!-- Заголовок -->
+                <h1 class="fade-in-up">SEO Продвижение сайтов в Тбилиси</h1>
+                <!-- Цена (заполнится JS) -->
+                <div class="detail-price fade-in-up"></div>
+            </div>
+
+            <!-- Изображение (Заглушка, реальное фото подгрузится из Firebase) -->
+            <img class="detail-main-image fade-in-up" 
+                 src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" 
+                 alt="SEO Продвижение сайтов в Тбилиси" 
+                 style="min-height: 250px; background: rgba(25, 29, 45, 0.4); width: 100%; object-fit: cover;">
+
+            <div class="detail-content">
+                <p>Даже самый лучший сайт бесполезен, если его никто не видит. Наши услуги SEO-продвижения нацелены на то, чтобы ваши потенциальные клиенты находили вас в Google раньше конкурентов.</p>
+                
+                <p><b>Что мы делаем:</b></p>
+                
+                <ul>
+                    <li><b>Технический аудит:</b> Находим и исправляем ошибки, которые мешают сайту ранжироваться.</li>
+                    <li><b>Сбор ключевых слов:</b> Определяем, по каким запросам ваши клиенты ищут ваши услуги.</li>
+                    <li><b>Внутренняя оптимизация:</b> Работаем с текстами, заголовками и изображениями, чтобы они нравились поисковым системам.</li>
+                    <li><b>Локальное SEO:</b> Делаем так, чтобы ваш бизнес появлялся на Google Картах и в локальной выдаче по Тбилиси.</li>
+                </ul>
+
+                <p style="margin-top: 40px; font-weight: 600; opacity: 0.9;">Бесплатная консультация по продвижению:</p>
+                <ul class="hero-contact-list" style="font-size: 1.1em; list-style: none; padding-left: 0;">
+                    <li style="margin-bottom: 10px;"><a href="https://wa.me/79119396075" target="_blank" rel="noopener noreferrer">WhatsApp</a></li>
+                    <li style="margin-bottom: 10px;"><a href="https://t.me/ramashery" target="_blank" rel="noopener noreferrer">Telegram</a></li>
+                    <li><a href="tel:+995591102653">+995 591 102 653</a></li>
+                </ul>
+            </div>
+        </section>
+        
+        <!-- Секция Related Posts появится автоматически -->
+    </main>
+    
+    <footer class="site-footer" id="site-footer">
+        © 2025 Digital Craft. All rights reserved.
+    </footer>
+    
+    <!-- Main Application Script -->
+    <script type="module" src="/main.js"></script>
+    
+    <!-- Yandex Metrika -->
+    <script type="text/javascript">
+        function loadYandexMetrika() {
+            (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+            (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+    
+            ym(103413242, "init", {
+                 clickmap:true,
+                 trackLinks:true,
+                 accurateTrackBounce:true,
+                 webvisor:true
+            });
+        }
+        setTimeout(loadYandexMetrika, 3000); 
+    </script>
+</body>
+</html>
