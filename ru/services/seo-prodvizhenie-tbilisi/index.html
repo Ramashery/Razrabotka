@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>SEO Продвижение Сайтов в Тбилиси | ТОП Google | Digital Craft</title>
+    <meta name="description" content="Профессиональное SEO продвижение и раскрутка сайтов в Грузии. Технический аудит, локальное SEO в Тбилиси и контент-стратегия. Увеличьте продажи с Digital Craft.">
+    
+    <!-- Canonical Link -->
+    <link rel="canonical" href="https://digital-craft-tbilisi.site/ru/services/seo-prodvizhenie-tbilisi/" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- --- CRITICAL CSS --- -->
+    <style>
+        :root {
+            --color-bg: #030409;
+            --color-text: #FFFFFF;
+            --color-accent: #b8d8e8;
+            --color-card: rgba(25, 29, 45, 0.4);
+            --color-border: rgba(184, 216, 232, 0.2);
+            --font-main: 'Inter', sans-serif;
+        }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: var(--color-bg); 
+            color: var(--color-text);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        #loader { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: var(--color-bg); 
+            display: flex; justify-content: center; align-items: center; 
+            z-index: 10000; 
+            transition: opacity 0.5s ease-out; 
+        }
+        #loader.hidden { opacity: 0; pointer-events: none; }
+        .spinner { 
+            width: 50px; height: 50px; 
+            border: 3px solid var(--color-accent); 
+            border-radius: 50%; 
+            border-top-color: transparent; 
+            animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Typography improvements for simple text */
+        .detail-content h2 {
+            color: var(--color-accent);
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        .detail-content h3 {
+            color: var(--color-accent);
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .detail-content ul {
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+        .detail-content li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+    </style>
+
+    <!-- External Styles -->
+    <link rel="stylesheet" href="/styles.css">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+
+    <!-- Schema.org JSON-LD with FAQPage (Russian Version) -->
+    <script type="application/ld+json">
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "name": "SEO Продвижение в Тбилиси",
+        "serviceType": "SEO Optimization",
+        "description": "Профессиональное SEO продвижение и раскрутка сайтов в Грузии. Технический аудит, локальное SEO в Тбилиси и контент-стратегия.",
+        "areaServed": {
+          "@type": "City",
+          "name": "Tbilisi"
+        },
+        "provider": {
+          "@type": "ProfessionalService",
+          "name": "Digital Craft",
+          "url": "https://digital-craft-tbilisi.site/",
+          "logo": "https://digital-craft-tbilisi.site/favicon.svg",
+          "image": "https://digital-craft-tbilisi.site/favicon.svg",
+          "telephone": "+995 591 102 653",
+          "priceRange": "$$",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Tbilisi",
+            "addressCountry": "GE"
+          }
+        }
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Как быстро появятся результаты?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Честный ответ: 3-6 месяцев для ощутимых результатов. SEO — это не реклама, где вы платите и сразу появляетесь. Это создание репутации сайта в глазах Google. Однако рост трафика вы заметите уже в первый месяц."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Сколько стоит SEO в Грузии?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Цена зависит от конкуренции в вашей нише и объема работ. Для малого бизнеса в Тбилиси наши цены конкурентны. Это инвестиция, которая окупается: обычно один-два новых клиента в месяц уже перекрывают стоимость услуг."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Могу ли я сделать SEO сам?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Можете, как можете сами починить машину. Базовое SEO не сложное, но эффективное продвижение требует технических знаний, постоянного обучения и дорогих профессиональных инструментов."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "В чем разница между SEO и Google рекламой?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Google Ads дает мгновенный результат, но вы платите за каждый клик. SEO разгоняется дольше (3-6 мес), но клики бесплатные, а результат работает годами. Лучшая стратегия: использовать и то, и другое."
+            }
+          }
+        ]
+      }
+    ]
+    </script>
+</head>
+
+<body data-static-page="true">
+
+    <div id="loader"><div class="spinner"></div></div>
+    
+    <iframe id="custom-background-iframe" title="Custom Background" style="display:none;"></iframe>
+    
+    <button class="menu-toggle" aria-label="Toggle menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+    
+    <div class="nav-overlay">
+        <ul class="nav-menu"></ul>
+    </div>
+
+    <main>
+        <section>
+            <div class="detail-page-header">
+                <!-- Заголовок -->
+                <h1 class="fade-in-up">SEO Продвижение в Тбилиси – Вывод сайта в ТОП</h1>
+                <!-- Цена -->
+                <div class="detail-price fade-in-up">От $300</div>
+            </div>
+
+            <!-- Изображение -->
+            <img class="detail-main-image fade-in-up" 
+                 src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" 
+                 alt="График роста SEO трафика в Тбилиси" 
+                 style="min-height: 250px; background: rgba(25, 29, 45, 0.4); width: 100%; object-fit: cover;">
+
+            <div class="detail-content">
+                
+                <!-- Main Content -->
+                <p>Представьте: вы вложили деньги в красивый сайт, но клиентов нет. Почему? Потому что ваш сайт находится на 10-й странице Google, куда никто не заглядывает. 95% пользователей выбирают компании из первых 5 результатов поиска. Если вас там нет, вы теряете клиентов каждый день.</p>
+
+                <p>SEO (Search Engine Optimization) — это не магия, а набор проверенных технических действий, которые поднимают ваш сайт в ТОП Google. Когда люди в Тбилиси ищут ваши услуги, они должны находить ВАС, а не ваших конкурентов.</p>
+
+                <h2>Почему SEO критически важно для бизнеса в Грузии</h2>
+
+                <p>Каждый день тысячи потенциальных клиентов в Тбилиси, Батуми и по всей Грузии ищут в Google такие вещи, как "ресторан рядом", "стоматолог в Тбилиси" или "ремонт квартир Грузия". Если ваш бизнес не появляется в этих результатах, для клиента вы просто не существуете.</p>
+
+                <p>Многие владельцы бизнеса не понимают одного: просто иметь сайт недостаточно. Google должен понимать, чем вы занимаетесь, где находитесь и почему клиенты должны выбрать именно вас. Именно это и делает SEO.</p>
+
+                <p><strong>Цифры не врут:</strong></p>
+                <ul>
+                    <li>75% людей никогда не переходят на вторую страницу поиска.</li>
+                    <li>Локальные поиски ("рядом со мной") приводят 50% пользователей в магазин в течение суток.</li>
+                    <li>Бизнесы в ТОП-3 Google получают 75% всех кликов.</li>
+                </ul>
+
+                <p>Не оптимизируя сайт, вы буквально прячете свой бизнес от людей, которые прямо сейчас ищут ваши услуги с деньгами в руках.</p>
+
+                <hr style="margin: 40px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+
+                <h2>Что мы делаем – Услуги SEO</h2>
+
+                <h3>Технический SEO Аудит</h3>
+                <p>Представьте, что ваш сайт — это автомобиль. Он может выглядеть отлично снаружи, но если двигатель неисправен, он не поедет. Техническое SEO — это починка "двигателя" сайта, чтобы Google мог правильно его читать и ранжировать.</p>
+                
+                <p><strong>Что мы проверяем и исправляем:</strong></p>
+                <ul>
+                    <li><b>Скорость загрузки:</b> Медленные сайты раздражают пользователей. Мы оптимизируем сайт для загрузки быстрее 3 секунд.</li>
+                    <li><b>Мобильная адаптация:</b> Более 70% поисков в Грузии происходит с телефонов. Ваш сайт будет идеально работать на любом экране.</li>
+                    <li><b>Битые ссылки и ошибки:</b> Ошибки 404 убивают рейтинг. Мы найдем и исправим их все.</li>
+                    <li><b>Структура сайта:</b> Организуем страницы так, чтобы Google легко понимал их иерархию.</li>
+                    <li><b>Безопасность (HTTPS):</b> Google любит безопасные сайты. Мы настроим SSL-сертификаты.</li>
+                </ul>
+
+                <h3>Подбор ключевых слов (Семантическое ядро)</h3>
+                <p>Здесь многие ошибаются. Они оптимизируют сайт под слова, которые используют САМИ, а не под те, что используют КЛИЕНТЫ.</p>
+
+                <p>Например, вы можете называть себя "провайдером цифровых решений", а клиент ищет "создание сайтов Тбилиси". Если вы не говорите на языке клиента, он вас не найдет.</p>
+
+                <p><strong>Как мы работаем с ключевыми словами:</strong></p>
+                <ul>
+                    <li><b>Анализ бизнеса:</b> Изучаем, кто ваши клиенты и что именно они ищут.</li>
+                    <li><b>Поиск запросов:</b> Находим точные фразы, которые люди вбивают в Google в Грузии.</li>
+                    <li><b>Анализ конкурентов:</b> Смотрим, по каким словам продвигаются конкуренты, и находим упущенные ими возможности.</li>
+                    <li><b>Локальный фокус:</b> Приоритет запросам со словами "Тбилиси", "Грузия", "рядом", "Сабуртало" и т.д.</li>
+                    <li><b>Намерение поиска:</b> Мы ищем запросы от людей, готовых купить, а не просто посмотреть.</li>
+                </ul>
+
+                <h3>Внутренняя оптимизация (On-Page SEO)</h3>
+                <p>Мы делаем каждую страницу вашего сайта привлекательной как для роботов Google, так и для людей.</p>
+
+                <p><strong>Что мы оптимизируем:</strong></p>
+                <ul>
+                    <li><b>Title и Description:</b> Заголовки и описания, которые появляются в поиске. Мы пишем их так, чтобы на них хотелось кликнуть.</li>
+                    <li><b>Заголовки (H1-H3):</b> Структурируем текст, чтобы его было легко читать.</li>
+                    <li><b>Текстовый контент:</b> Естественно внедряем ключевые слова в текст, без спама.</li>
+                    <li><b>Изображения:</b> Сжимаем картинки для скорости и добавляем описание (Alt text) для поиска по картинкам.</li>
+                    <li><b>Внутренняя перелинковка:</b> Связываем страницы ссылками, чтобы удержать пользователя на сайте дольше.</li>
+                </ul>
+
+                <h3>Локальное SEO – Вас найдут соседи</h3>
+                <p>КРИТИЧЕСКИ важно для бизнеса в Тбилиси. Локальное SEO гарантирует, что вы появитесь, когда люди ищут услуги "рядом со мной" или в конкретном районе.</p>
+
+                <p><strong>Что мы делаем:</strong></p>
+                <ul>
+                    <li><b>Google Мой Бизнес:</b> Полная настройка профиля на картах Google (адрес, часы работы, фото). Это выводит вас в блок с картой в топе поиска.</li>
+                    <li><b>Регистрация в каталогах:</b> Размещаем информацию о компании в грузинских и международных справочниках для роста доверия.</li>
+                    <li><b>Гео-запросы:</b> Оптимизируем под запросы вроде "SEO в Тбилиси", "стоматология Ваке", "салон красоты Сабуртало".</li>
+                    <li><b>Работа с отзывами:</b> Помогаем получать больше отзывов (фактор №1 для локального рейтинга).</li>
+                </ul>
+
+                <h3>Контент-стратегия</h3>
+                <p>Контент — это не просто "новости компании". Это ответы на вопросы ваших клиентов.</p>
+
+                <p><strong>Почему контент важен:</strong></p>
+                <ul>
+                    <li>Google поднимает сайты, которые дают полезную информацию.</li>
+                    <li>Хорошие статьи привлекают клиентов, у которых есть проблема.</li>
+                    <li>Пример: стоматолог может написать статью "Сколько стоит отбеливание зубов в Тбилиси" и получить готовых клиентов с поиска.</li>
+                </ul>
+
+                <hr style="margin: 40px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+
+                <h2>Как происходит процесс работы</h2>
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin: 20px 0;">
+                    <p><b>Шаг 1: Консультация (Бесплатно)</b><br>
+                    Обсуждаем ваши цели. Смотрим текущий сайт и честно говорим, что нужно исправить.</p>
+                    
+                    <p><b>Шаг 2: SEO Аудит</b><br>
+                    Полный анализ сайта: технические ошибки, текущие позиции, анализ конкурентов.</p>
+                    
+                    <p><b>Шаг 3: Стратегия</b><br>
+                    Разрабатываем индивидуальный план продвижения. Никаких шаблонов — стратегия под ваш бизнес.</p>
+                    
+                    <p><b>Шаг 4: Внедрение</b><br>
+                    Исправляем ошибки, пишем тексты, настраиваем карты, ускоряем сайт.</p>
+                    
+                    <p><b>Шаг 5: Мониторинг</b><br>
+                    SEO требует времени (3-6 месяцев). Мы следим за ростом позиций и корректируем стратегию.</p>
+                    
+                    <p style="margin-bottom: 0;"><b>Шаг 6: Отчетность</b><br>
+                    Вы получаете понятные отчеты: рост позиций, трафик и, главное, новые клиенты из поиска.</p>
+                </div>
+
+                <hr style="margin: 40px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+
+                <h2>Часто задаваемые вопросы (FAQ)</h2>
+
+                <h3>Как быстро появятся результаты?</h3>
+                <p>Честный ответ: 3-6 месяцев для ощутимых результатов. SEO — это не реклама, где вы платите и сразу появляетесь. Это создание репутации сайта в глазах Google. Однако рост трафика вы заметите уже в первый месяц.</p>
+                <p>Быстрые победы (исправление ошибок, локальное SEO) работают за пару недель. Конкурентные запросы требуют 6-12 месяцев. Зато результат сохраняется надолго бесплатно.</p>
+
+                <h3>Сколько стоит SEO в Грузии?</h3>
+                <p>Цена зависит от конкуренции в вашей нише и объема работ. Для малого бизнеса в Тбилиси наши цены начинаются от $300-500 в месяц. Это инвестиция, которая окупается: обычно один-два новых клиента в месяц уже перекрывают стоимость услуг.</p>
+
+                <h3>Могу ли я сделать SEO сам?</h3>
+                <p>Можете, как можете сами починить машину или постричься. Базовое SEO не сложное, но эффективное продвижение требует технических знаний, постоянного обучения и дорогих профессиональных инструментов. Владельцу бизнеса выгоднее заниматься управлением, а SEO отдать экспертам.</p>
+
+                <h3>В чем разница между SEO и Google рекламой?</h3>
+                <p><strong>Google Ads (Реклама):</strong> Мгновенный результат, но вы платите за каждый клик. Перестали платить — клиенты исчезли.<br>
+                <strong>SEO (Органика):</strong> Долго разгоняется (3-6 мес), но клики бесплатные. Результат работает на вас годами.<br>
+                <strong>Лучшая стратегия:</strong> Использовать и то, и другое.</p>
+
+                <hr style="margin: 40px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+
+                <h2>Почему выбирают Digital Craft?</h2>
+                <ul>
+                    <li><b>Мы знаем рынок Грузии:</b> Мы не используем шаблонные стратегии из США. Мы знаем, как ищут в Тбилиси, и понимаем местную специфику.</li>
+                    <li><b>Простая коммуникация:</b> Никаких сложных терминов. Мы объясняем все простым языком.</li>
+                    <li><b>Проверенная методология:</b> Мы используем только безопасные ("белые") методы продвижения, одобренные Google.</li>
+                    <li><b>Доступные цены:</b> Международное качество по грузинским ценам.</li>
+                    <li><b>Долгосрочное партнерство:</b> Мы растем вместе с вашим бизнесом.</li>
+                    <li><b>Мы рядом:</b> Находимся в Тбилиси. Всегда можем встретиться и обсудить стратегию за кофе.</li>
+                </ul>
+
+                <hr style="margin: 40px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+
+                <h2>Готовы выйти в ТОП Google?</h2>
+                <p>Каждый день ожидания — это клиенты, которые уходят к вашим конкурентам. SEO — это инвестиция, которая будет приносить прибыль годами.</p>
+
+                <p>Давайте обсудим ваш бизнес и создадим стратегию, которая принесет вам трафик и продажи.</p>
+
+                <!-- Contacts Block -->
+                <p style="margin-top: 40px; font-weight: 600; opacity: 0.9; font-size: 1.2em;">Свяжитесь с нами для бесплатной консультации:</p>
+
+                <ul style="font-size: 1.1em; list-style: none; padding-left: 0; margin-top: 15px;">
+                    <li style="margin-bottom: 15px;">
+                        <a href="https://wa.me/79119396075" target="_blank" rel="noopener noreferrer" style="color: #b8d8e8; text-decoration: none; border-bottom: 1px solid rgba(184, 216, 232, 0.3); padding-bottom: 2px;">
+                            WhatsApp
+                        </a>
+                    </li>
+                    <li style="margin-bottom: 15px;">
+                        <a href="https://t.me/ramashery" target="_blank" rel="noopener noreferrer" style="color: #b8d8e8; text-decoration: none; border-bottom: 1px solid rgba(184, 216, 232, 0.3); padding-bottom: 2px;">
+                            Telegram
+                        </a>
+                    </li>
+                    <li>
+                        <a href="tel:+995591102653" style="color: #b8d8e8; text-decoration: none; border-bottom: 1px solid rgba(184, 216, 232, 0.3); padding-bottom: 2px;">
+                            +995 591 102 653
+                        </a>
+                    </li>
+                </ul>
+
+                <p style="margin-top: 30px; font-size: 1.1em; font-style: italic; opacity: 0.8;">Выведем ваш бизнес на первую страницу.</p>
+            </div>
+        </section>
+        
+        <!-- Секция Related Posts появится автоматически благодаря JS -->
+    </main>
+    
+    <footer class="site-footer" id="site-footer">
+        © 2025 Digital Craft. Все права защищены.
+    </footer>
+    
+    <!-- Main Application Script -->
+    <script type="module" src="/main.js"></script>
+    
+    <!-- Yandex Metrika -->
+    <script type="text/javascript">
+        function loadYandexMetrika() {
+            (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+            (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+    
+            ym(103413242, "init", {
+                 clickmap:true,
+                 trackLinks:true,
+                 accurateTrackBounce:true,
+                 webvisor:true
+            });
+        }
+        setTimeout(loadYandexMetrika, 3000); 
+    </script>
+</body>
+</html>
