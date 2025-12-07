@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>Web Development & SEO Services in Tbilisi, Georgia | Digital Craft</title>
+    <meta name="description" content="Professional website development and SEO for small and medium businesses in Tbilisi. Get a fast, modern, and results-driven website. Contact us for a free consultation!">
+    
+    <!-- Canonical Link -->
+    <link rel="canonical" href="https://digital-craft-tbilisi.site/" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Web Development & SEO Services in Tbilisi, Georgia | Digital Craft">
+    <meta property="og:description" content="Professional website development and SEO for small and medium businesses in Tbilisi. Get a fast, modern, and results-driven website.">
+    <meta property="og:image" content="https://digital-craft-tbilisi.site/favicon.svg">
+    <meta property="og:type" content="website">
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- --- CRITICAL CSS --- -->
+    <style>
+        :root {
+            --color-bg: #030409;
+            --color-text: #FFFFFF;
+            --color-accent: #b8d8e8;
+            --color-card: rgba(25, 29, 45, 0.4);
+            --color-border: rgba(184, 216, 232, 0.2);
+            --font-main: 'Inter', sans-serif;
+            --header-height: 80px;
+        }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: var(--color-bg); 
+            color: var(--color-text);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        
+        /* Стили Hero (Desktop First) */
+        .hero { 
+            min-height: 90vh; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            padding: 0 30px; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+        .hero h1 { 
+            font-size: clamp(2.5rem, 8vw, 4.5rem); 
+            margin: 0 0 20px; 
+            line-height: 1.1; 
+            font-weight: 700; 
+            text-shadow: 0 0 15px rgba(184, 216, 232, 0.4);
+        }
+        .hero-subtitle-container p { 
+            font-size: 1.4rem; 
+            max-width: 600px; 
+            opacity: 0.9; 
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        .hero-contact-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 1.1rem;
+        }
+        .hero-contact-list li {
+            margin-bottom: 10px;
+        }
+        .hero-contact-list a {
+            color: var(--color-accent);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s;
+        }
+        .hero-contact-list a:hover {
+            border-bottom-color: var(--color-accent);
+        }
+
+        /* --- MOBILE FIXES --- */
+        @media (max-width: 600px) {
+            .hero {
+                padding: 0 16px; /* Еще меньше отступы по бокам для мобильных */
+                min-height: 85vh;
+                justify-content: center; /* Центрируем по вертикали */
+            }
+            
+            .hero h1 {
+                margin-bottom: 15px;
+                max-width: 90%; /* h1 чуть уже, чем контейнер */
+                margin-left: 0;
+                padding-right: 0;
+            }
+            
+            .hero-subtitle-container {
+                width: 100%; /* Занимаем всю ширину */
+                margin-left: 0;
+            }
+            
+            .hero-subtitle-container p {
+                font-size: 1.1rem;
+                max-width: 100%; /* Полная ширина для подзаголовка */
+                margin-left: 0;
+                margin-right: 0;
+                padding-right: 0; /* Убираем правый padding */
+                opacity: 0.9;
+                margin-bottom: 25px;
+                line-height: 1.5; /* Оставляем как есть */
+                /* Можно добавить небольшие отрицательные отступы для расширения */
+                margin-left: -2px;
+                margin-right: -2px;
+            }
+            
+            .hero-contact-list {
+                font-size: 1rem;
+                margin-left: 0;
+                max-width: 100%;
+                padding-left: 0; /* Убираем левый отступ у списка */
+            }
+        }
+        
+        #loader { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--color-bg); display: flex; justify-content: center; align-items: center; 
+            z-index: 10000; transition: opacity 0.5s ease-out; 
+        }
+        #loader.hidden { opacity: 0; pointer-events: none; }
+        .spinner { 
+            width: 50px; height: 50px; border: 3px solid var(--color-accent); 
+            border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+
+    <link rel="stylesheet" href="/styles.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/styles.css"></noscript>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfessionalService",
+      "name": "Digital Craft Tbilisi",
+      "image": "https://digital-craft-tbilisi.site/favicon.svg",
+      "url": "https://digital-craft-tbilisi.site",
+      "telephone": "+995 591 102 653",
+      "priceRange": "$$",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Tbilisi",
+        "addressCountry": "GE"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "41.7151",
+        "longitude": "44.8271" 
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
+        ],
+        "opens": "10:00",
+        "closes": "19:00"
+      },
+      "sameAs": [
+        "https://wa.me/79119396075",
+        "https://t.me/ramashery"
+      ]
+    }
+    </script>
+</head>
+<body>
+    
+    <div id="loader"><div class="spinner"></div></div>
+    
+    <iframe id="custom-background-iframe" title="Custom Background" style="display:none;"></iframe>
+    
+    <button class="menu-toggle" aria-label="Toggle menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+    
+    <div class="nav-overlay">
+        <ul class="nav-menu"></ul>
+    </div>
+
+    <main>
+        <section id="hero" class="hero">
+            <h1>Web Development & SEO in Tbilisi</h1>
+            <div class="hero-subtitle-container">
+                <p>We create high-performance websites for Georgian businesses that attract clients and boost revenue. Modern design, cutting-edge technology, and measurable results.</p>
+                
+                <ul class="hero-contact-list">
+                    <li><a href="https://wa.me/79119396075" target="_blank" rel="noopener noreferrer">WhatsApp</a></li>
+                    <li><a href="https://t.me/ramashery" target="_blank" rel="noopener noreferrer">Telegram</a></li>
+                    <li><a href="tel:+995591102653">+995 591 102 653</a></li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Ссылки для робота (обновленные) -->
+        <noscript>
+            <section>
+                <h2>Our Services</h2>
+                <ul>
+                    <li><a href="/en/services/custom-web-development-tbilisi/">Web Development</a></li>
+                    <li><a href="/en/services/seo-optimization-tbilisi/">SEO Optimization</a></li>
+                </ul>
+            </section>
+        </noscript>
+    </main>
+    
+    <footer class="site-footer" id="site-footer"></footer>
+    
+    <!-- ОСНОВНОЙ СКРИПТ ПРИЛОЖЕНИЯ -->
+    <script type="module" src="/main.js"></script>
+    
+    <!-- Яндекс.Метрика -->
+    <script type="text/javascript">
+        function loadYandexMetrika() {
+            (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+            (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+    
+            ym(103413242, "init", {
+                 clickmap:true,
+                 trackLinks:true,
+                 accurateTrackBounce:true,
+                 webvisor:true
+            });
+        }
+        setTimeout(loadYandexMetrika, 3000); 
+    </script>
+
+</body>
+</html>
