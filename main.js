@@ -13,7 +13,7 @@ const db = firebase.firestore();
 // --- LOCAL DATA CACHE & INITIAL DATA ---
 let siteData = {};
 const initialSiteData = {
-    home: { h1: "Loading...", subtitle: "Please wait while we fetch the latest data.", lang: "en", seoTitle: "Digital Craft", metaDescription: "Professional websites for small businesses", schemaJsonLd: {}, ogTitle: "", ogDescription: "", ogImage: "", backgroundHtml: "" },
+    home: { h1: "", subtitle: "", lang: "en", seoTitle: "Digital Craft", metaDescription: "Professional websites for small businesses", schemaJsonLd: {}, ogTitle: "", ogDescription: "", ogImage: "", backgroundHtml: "" },
     services: [], portfolio: [], blog: [], contact: []
 };
 
@@ -33,9 +33,6 @@ function renderSeoTags(data) {
     const canonicalBaseUrl = 'https://digital-craft-tbilisi.site'; 
     let cleanPath = window.location.pathname;
     
-    // ЛОГИКА КАНОНИЧЕСКИХ ССЫЛОК:
-    // Если это наша статическая страница - оставляем слэш.
-    // Если нет - убираем.
     if (cleanPath.includes('seo-optimization-tbilisi')) {
         if (!cleanPath.endsWith('/')) cleanPath += '/';
     } else {
@@ -140,9 +137,60 @@ function formatContentHtml(content) { if (!content) return ''; let processedCont
 
 let paragraphObserver, floatingObserver, homePageObserver;
 
-function routeAndRender() { if (typeof ym === 'function') { ym(103413242, 'hit', window.location.href); } if (paragraphObserver) paragraphObserver.disconnect(); if (floatingObserver) floatingObserver.disconnect(); if (homePageObserver) homePageObserver.disconnect(); const path = window.location.pathname; const detailPageRegex = /^\/(?:([a-z]{2})\/)?(services|portfolio|blog|contact)\/([a-zA-Z0-9-]+)\/?$/; const match = path.match(detailPageRegex); const footer = document.getElementById('site-footer'); mainContentEl.innerHTML = ''; footer.style.display = 'none'; if (match) { const [, lang, collection, slug] = match; const currentLang = lang || defaultLang; renderDetailPage(collection, slug, currentLang); } else { renderHomePage(); footer.style.display = 'block'; } };
+function routeAndRender() { 
+    if (typeof ym === 'function') { ym(103413242, 'hit', window.location.href); } 
+    if (paragraphObserver) paragraphObserver.disconnect(); 
+    if (floatingObserver) floatingObserver.disconnect(); 
+    if (homePageObserver) homePageObserver.disconnect(); 
+    
+    const path = window.location.pathname; 
+    const detailPageRegex = /^\/(?:([a-z]{2})\/)?(services|portfolio|blog|contact)\/([a-zA-Z0-9-]+)\/?$/; 
+    const match = path.match(detailPageRegex); 
+    const footer = document.getElementById('site-footer'); 
+    
+    footer.style.display = 'none'; 
+    
+    if (match) { 
+        // Если это детальная страница, мы полностью перерисовываем main
+        mainContentEl.innerHTML = '';
+        const [, lang, collection, slug] = match; 
+        const currentLang = lang || defaultLang; 
+        renderDetailPage(collection, slug, currentLang); 
+    } else { 
+        // Если это главная страница
+        renderHomePage(); 
+        footer.style.display = 'block'; 
+    } 
+};
 
-function renderHomePage() { mainContentEl.innerHTML = `<section id="hero" class="hero"></section><section id="services"></section><section id="portfolio"></section><section id="blog"></section><section id="contact"></section>`; applyCustomBackground(); updateMetaTags(); renderHero(); renderSection('services', 'Our Services', siteData.services); renderSection('portfolio', 'Our Work', siteData.portfolio); renderSection('blog', 'Latest Insights', siteData.blog); renderSection('contact', 'Get in Touch', siteData.contact); initMobileSliders(); initDesktopCarousels(); initFloatingObservers(); initHomePageObservers(); };
+function renderHomePage() { 
+    // --- ИСПРАВЛЕНИЕ: ГИДРАТАЦИЯ ВМЕСТО ПЕРЕЗАПИСИ ---
+    // Проверяем, есть ли уже структура (например, из статического HTML)
+    const heroExists = document.getElementById('hero');
+    
+    if (!heroExists) {
+        // Если структуры нет (пришли с другой страницы), создаем её
+        mainContentEl.innerHTML = `<section id="hero" class="hero"></section><section id="services"></section><section id="portfolio"></section><section id="blog"></section><section id="contact"></section>`; 
+    }
+    // Если структура есть (первая загрузка), мы НЕ трогаем innerHTML mainContentEl,
+    // чтобы не стереть статический контент.
+
+    applyCustomBackground(); 
+    updateMetaTags(); 
+    
+    // Рендерим контент внутрь существующих секций
+    renderHero(); 
+    renderSection('services', 'Our Services', siteData.services); 
+    renderSection('portfolio', 'Our Work', siteData.portfolio); 
+    renderSection('blog', 'Latest Insights', siteData.blog); 
+    renderSection('contact', 'Get in Touch', siteData.contact); 
+    
+    initMobileSliders(); 
+    initDesktopCarousels(); 
+    initFloatingObservers(); 
+    initHomePageObservers(); 
+};
+
 function renderDetailPage(collection, slug, lang) { const item = siteData[collection]?.find(d => d.urlSlug === slug && d.lang === lang); if (!item) { mainContentEl.innerHTML = `<section class="detail-page-header"><h1>404 - Not Found</h1><p>The page you were looking for does not exist.</p><a href="/">Go back home</a></section>`; document.title = "404 Not Found | Digital Craft"; applyCustomBackground(); return; } document.documentElement.lang = lang; applyCustomBackground(item); updateMetaTags(item); const formattedContent = formatContentHtml(item.mainContent); mainContentEl.innerHTML = `<section><div class="detail-page-header"><h1 class="fade-in-up" style="animation-delay: 0.5s;">${item.h1 || ''}</h1>${item.price ? `<div class="detail-price fade-in-up" style="animation-delay: 0.7s;">${item.price}</div>` : ''}</div><img class="detail-main-image fade-in-up" src="${(item.media || []).find(url => !/youtube|vimeo/.test(url)) || ''}" alt="${item.mainImageAlt || item.title}" style="animation-delay: 0.6s;"><div class="detail-content">${formattedContent}</div></section>`; renderRelatedPosts(collection, slug, lang); initParagraphObservers(); }
 
 function renderRelatedPosts(currentCollection, currentSlug, currentLang) { 
@@ -153,7 +201,6 @@ function renderRelatedPosts(currentCollection, currentSlug, currentLang) {
     const itemsHTML = relatedItems.map(item => { 
         const langPrefix = item.lang ? `/${item.lang}` : ''; 
         let itemUrl = `${langPrefix}/${item.collection}/${item.urlSlug}`; 
-        // !!! FIX: ДОБАВЛЯЕМ СЛЭШ ДЛЯ СТАТИЧЕСКОЙ СТРАНИЦЫ
         if (item.urlSlug === 'seo-optimization-tbilisi') { itemUrl += '/'; }
         
         return `<a href="${itemUrl}" class="item-card floating-item"><div class="item-card__image" style="background-image: url('${(item.media || []).find(url => !/youtube|vimeo/.test(url)) || ''}')"></div><div class="item-card__content"><h3>${item.title}</h3><div class="card-subtitle">${item.subtitle}</div><p>${item.description}</p></div></a>` 
@@ -164,7 +211,23 @@ function renderRelatedPosts(currentCollection, currentSlug, currentLang) {
 
 function updateMetaTags(itemData = {}) { const dataToRender = (itemData && Object.keys(itemData).length > 0) ? itemData : siteData.home; renderSeoTags(dataToRender); }
 function renderMenu() { const menuEl = document.querySelector('.nav-menu'); if (!menuEl) return; const menuItems = [ { label: 'Home', href: '/#hero' }, { label: 'Services', href: '/#services' }, { label: 'Portfolio', href: '/#portfolio' }, { label: 'Blog', href: '/#blog' }, { label: 'Contact', href: '/#contact' } ]; menuEl.innerHTML = menuItems.map(item => `<li><a href="${item.href}">${item.label}</a></li>`).join(''); }
-function renderHero() { const heroSection = document.getElementById('hero'); if (!heroSection) return; const { h1, subtitle } = siteData.home; let heroContent = `<h1>${h1 || ''}</h1>`; if (subtitle) { const formattedSubtitle = formatContentHtml(subtitle); heroContent += `<div class="hero-subtitle-container">${formattedSubtitle}</div>`; } heroSection.innerHTML = heroContent; };
+
+function renderHero() { 
+    const heroSection = document.getElementById('hero'); 
+    if (!heroSection) return; 
+    
+    // --- ЗАЩИТА СТАТИЧЕСКОГО КОНТЕНТА ---
+    // Если данные еще не загрузились из Firebase, не трогаем статический HTML
+    if (!siteData.home || !siteData.home.h1) return;
+
+    const { h1, subtitle } = siteData.home; 
+    let heroContent = `<h1>${h1 || ''}</h1>`; 
+    if (subtitle) { 
+        const formattedSubtitle = formatContentHtml(subtitle); 
+        heroContent += `<div class="hero-subtitle-container">${formattedSubtitle}</div>`; 
+    } 
+    heroSection.innerHTML = heroContent; 
+};
 
 function renderSection(key, title, items) { 
     const section = document.getElementById(key); if (!section) return; 
@@ -181,7 +244,6 @@ function renderSection(key, title, items) {
             const cardsHTML = slideItems.map(item => { 
                 const langPrefix = item.lang ? `/${item.lang}` : ''; 
                 let itemUrl = `${langPrefix}/${key}/${item.urlSlug}`; 
-                // !!! FIX: ДОБАВЛЯЕМ СЛЭШ ДЛЯ СТАТИЧЕСКОЙ СТРАНИЦЫ
                 if (item.urlSlug === 'seo-optimization-tbilisi') { itemUrl += '/'; }
 
                 return `<a href="${itemUrl}" class="item-card floating-item"><div class="item-card__image" style="background-image: url('${(item.media || []).find(url => !/youtube|vimeo/.test(url)) || ''}')"></div><div class="item-card__content"><h3>${item.title}</h3><div class="card-subtitle">${item.subtitle}</div><p>${item.description}</p></div></a>`; 
@@ -198,7 +260,6 @@ function renderSection(key, title, items) {
         const slidesHTML = langItems.map((item, index) => { 
             const langPrefix = item.lang ? `/${item.lang}` : ''; 
             let itemUrl = `${langPrefix}/${key}/${item.urlSlug}`; 
-            // !!! FIX: ДОБАВЛЯЕМ СЛЭШ ДЛЯ СТАТИЧЕСКОЙ СТРАНИЦЫ
             if (item.urlSlug === 'seo-optimization-tbilisi') { itemUrl += '/'; }
 
             return `<a href="${itemUrl}" class="item-card ${index === 0 ? 'active' : ''}"><div class="item-card__image" style="background-image: url('${(item.media || []).find(url => !/youtube|vimeo/.test(url)) || ''}')"></div><div class="item-card__content"><h3>${item.title}</h3><div class="card-subtitle">${item.subtitle}</div><p>${item.description}</p></div></a>` 
@@ -276,6 +337,15 @@ function initApp() {
     }
 
     // --- ОБЫЧНАЯ ЗАГРУЗКА SPA ---
+    
+    // ВАЖНОЕ ИЗМЕНЕНИЕ: Если мы на главной странице, скрываем лоадер СРАЗУ,
+    // потому что у нас уже есть статический HTML в index.html.
+    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+        const loader = document.getElementById('loader');
+        if (loader) loader.classList.add('hidden');
+    }
+
+    // Тайм-аут на всякий случай
     setTimeout(() => {
         const loader = document.getElementById('loader');
         if (loader && !loader.classList.contains('hidden')) {
@@ -288,6 +358,7 @@ function initApp() {
         siteData = freshSiteData;
         renderMenu();
         routeAndRender();
+        // Если мы не на главной (где лоадер уже скрыт), скрываем его сейчас
         document.getElementById('loader').classList.add('hidden');
         console.log("Data loaded from Firebase, render complete.");
     }).catch(error => {
