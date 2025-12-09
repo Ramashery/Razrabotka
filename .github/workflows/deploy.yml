@@ -1,0 +1,28 @@
+# Название процесса, которое будет отображаться в GitHub Actions
+name: Deploy to Firebase Hosting
+
+# Триггер: запускать этот процесс при каждом push в ветку 'main'
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # Название задачи
+  deploy_to_firebase:
+    # Запускать на последней версии Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Шаг: Скачиваем исходный код вашего репозитория
+      - uses: actions/checkout@v3
+
+      # 2. Шаг: Разворачиваем сайт на Firebase Hosting
+      # Этот экшен использует ваш секрет для авторизации и деплоит сайт
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          # Используем имя секрета, которое вы указали
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}'
+          channelId: live
+          # Используем ID вашего проекта со скриншота
+          projectId: 'razrabotka-b61bc'
