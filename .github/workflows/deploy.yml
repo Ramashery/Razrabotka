@@ -1,5 +1,5 @@
-# Название процесса, которое будет отображаться в GitHub Actions
-name: Deploy to Firebase Hosting
+ # Название процесса, которое будет отображаться в GitHub Actions
+name: Deploy to Firebase Hosting using Token
 
 # Триггер: запускать этот процесс при каждом push в ветку 'main'
 on:
@@ -16,13 +16,12 @@ jobs:
       # 1. Шаг: Скачиваем исходный код вашего репозитория
       - uses: actions/checkout@v3
 
-      # 2. Шаг: Разворачиваем сайт на Firebase Hosting
-      # Этот экшен использует ваш секрет для авторизации и деплоит сайт
+      # 2. Шаг: Разворачиваем сайт на Firebase Hosting, используя токен
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          # Используем имя секрета, которое вы указали
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}'
+          # Используем новый секрет с токеном
+          firebaseToken: '${{ secrets.FIREBASE_TOKEN }}'
           channelId: live
-          # Используем ID вашего проекта со скриншота
+          # ID вашего проекта
           projectId: 'razrabotka-b61bc'
