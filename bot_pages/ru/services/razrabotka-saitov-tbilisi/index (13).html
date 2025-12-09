@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>Разработка Сайтов в Тбилиси под Ключ | Создание и Веб-дизайн</title>
+    <meta name="description" content="Заказать создание сайта в Тбилиси. Профессиональная разработка лендингов, корпоративных сайтов и интернет-магазинов. Адаптивный дизайн, SEO-оптимизация и поддержка.">
+    
+    <!-- Canonical Link -->
+    <link rel="canonical" href="https://digital-craft-tbilisi.site/ru/services/razrabotka-saitov-tbilisi/" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- --- CRITICAL CSS --- -->
+    <style>
+        :root {
+            --color-bg: #030409;
+            --color-text: #FFFFFF;
+            --color-accent: #b8d8e8;
+            --color-card: rgba(25, 29, 45, 0.4);
+            --color-border: rgba(184, 216, 232, 0.2);
+            --font-main: 'Inter', sans-serif;
+        }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: var(--color-bg); 
+            color: var(--color-text);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        #loader { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: var(--color-bg); 
+            display: flex; justify-content: center; align-items: center; 
+            z-index: 10000; 
+            transition: opacity 0.5s ease-out; 
+        }
+        #loader.hidden { opacity: 0; pointer-events: none; }
+        .spinner { 
+            width: 50px; height: 50px; 
+            border: 3px solid var(--color-accent); 
+            border-radius: 50%; 
+            border-top-color: transparent; 
+            animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Typography improvements */
+        .detail-content h2 {
+            color: var(--color-accent);
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        .detail-content h3 {
+            color: var(--color-accent);
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .detail-content ul {
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+        .detail-content li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+    </style>
+
+    <!-- External Styles -->
+    <link rel="stylesheet" href="/styles.css">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "name": "Разработка Сайтов в Тбилиси",
+        "serviceType": "Web Design & Development",
+        "description": "Профессиональное создание сайтов в Тбилиси. Разработка лендингов, корпоративных сайтов и интернет-магазинов под ключ.",
+        "areaServed": {
+          "@type": "City",
+          "name": "Tbilisi"
+        },
+        "provider": {
+          "@type": "ProfessionalService",
+          "name": "Digital Craft",
+          "url": "https://digital-craft-tbilisi.site/",
+          "logo": "https://digital-craft-tbilisi.site/favicon.svg",
+          "image": "https://digital-craft-tbilisi.site/favicon.svg",
+          "telephone": "+995 591 102 653",
+          "priceRange": "$$",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Tbilisi",
+            "addressCountry": "GE"
+          }
+        }
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Сколько стоит разработка сайта в Тбилиси?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "От $400 за лендинг до $2000+ за сложный интернет-магазин. Это честная цена за качественную работу под ключ без скрытых доплат."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Какие сроки создания проекта?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "В среднем от 7 дней до 1 месяца. Лендинг создается за 1-2 недели, корпоративный сайт за 3-4 недели. Сроки фиксируются в договоре."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Смогу ли я сам управлять контентом?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Да, вы сможете менять тексты и фото без помощи программиста. Мы разрабатываем сайты на удобных CMS и проводим обучение."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Вы работаете только в Грузии?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Наш офис в Тбилиси, но мы работаем по всему миру."
+            }
+          }
+        ]
+      }
+    ]
+    </script>
+</head>
+
+<body data-static-page="true">
+
+    <div id="loader"><div class="spinner"></div></div>
+    
+    <iframe id="custom-background-iframe" title="Custom Background" style="display:none;"></iframe>
+    
+    <button class="menu-toggle" aria-label="Toggle menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+    
+    <div class="nav-overlay">
+        <ul class="nav-menu"></ul>
+    </div>
+
+    <main>
+        <section>
+            <div class="detail-page-header">
+                <!-- Заголовок -->
+                <h1 class="fade-in-up">Разработка Сайтов в Тбилиси под Ключ</h1>
+                <!-- Цена -->
+                <div class="detail-price fade-in-up">От $400</div>
+            </div>
+
+            <!-- Изображение -->
+            <img class="detail-main-image fade-in-up" 
+                 src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" 
+                 alt="Процесс разработки современного веб-сайта в Тбилиси" 
+                 style="min-height: 250px; background: rgba(25, 29, 45, 0.4); width: 100%; object-fit: cover;">
+
+            <div class="detail-content">
+                
+                <!-- Main Content -->
+                <p>Представьте ситуацию: турист гуляет по Старому Тбилиси и ищет ресторан с грузинской кухней. Он находит ваш сайт в Google, кликает... но страница долго грузится или меню "уезжает" за край экрана смартфона. Итог? Клиент закрывает вкладку и идет к конкуренту. Это реальность для 40% компаний, которые экономят на качественном веб-ресурсе.</p>
+
+                <p>Мы предлагаем профессиональное <strong>создание сайтов для бизнеса в Грузии</strong>. Мы делаем не просто красивую картинку, а рабочий инструмент, который превращает посетителей в покупателей 24/7, будь то продажа недвижимости, доставка вина или юридические услуги.</p>
+
+                <h2>Веб-сайт под ключ в Тбилиси: Что вы получаете?</h2>
+
+                <p>Рынок активно переходит в "цифру". 80% клиентов ищут товары и услуги через смартфон. Чтобы выигрывать конкуренцию, вам нужна площадка, которая работает как швейцарские часы.</p>
+
+                <p><strong>Мы закрываем главные боли бизнеса:</strong></p>
+                <ul>
+                    <li><b>Идеальная работа на мобильных:</b> Более 70% трафика в Грузии идет со смартфонов. Мы гарантируем, что ваш ресурс будет удобен и на iPhone, и на Android.</li>
+                    <li><b>Скорость и SEO:</b> Мы пишем чистый код. Быстрые страницы лучше ранжируются Google, а значит, вы получаете больше бесплатных клиентов из органического поиска.</li>
+                    <li><b>Локализация и Мультиязычность:</b> Работаете в Тбилиси? Мы грамотно настроим переключение языков (KA/EN/RU), чтобы вы охватили и местных жителей, и экспатов, и туристов.</li>
+                </ul>
+
+                <hr style="margin: 40px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+
+                <h2>Какие проекты мы запускаем (Типы и Цены)</h2>
+
+                <h3>Разработка Лендингов (Landing Page)</h3>
+                <p>Одностраничный промо-сайт для быстрой продажи. Идеальное решение для:</p>
+                <ul>
+                    <li>Запуска таргетированной рекламы в Facebook/Instagram.</li>
+                    <li>Презентации конкретной услуги (например, "Туры в Казбеги").</li>
+                    <li>Сбора заявок на мероприятия.</li>
+                </ul>
+
+                <h3>Создание Корпоративных сайтов</h3>
+                <p>Многостраничный ресурс для укрепления имиджа компании. Необходим застройщикам, клиникам, юридическим фирмам и отелям. Включает каталог услуг, портфолио кейсов, блог и формы связи.</p>
+
+                <h3>Запуск Интернет-магазинов (E-commerce)</h3>
+                <p>Полноценная торговая площадка для онлайн-продаж. Мы подключаем:</p>
+                <ul>
+                    <li>Удобный каталог с фильтрами товаров.</li>
+                    <li>Корзину и личный кабинет покупателя.</li>
+                    <li>Оплату картами через грузинские банки (TBC, Bank of Georgia) и международные системы.</li>
+                </ul>
+
+                <hr style="margin: 40px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+
+                <h2>Этапы работы: от Идеи до Запуска</h2>
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); margin: 20px 0;">
+                    <p><b>1. Маркетинговый анализ</b><br>
+                    Мы не начинаем дизайн без подготовки. Изучаем вашу нишу и конкурентов в Тбилиси, чтобы сделать ваше предложение выгоднее.</p>
+                    
+                    <p><b>2. Прототип и UI/UX Дизайн</b><br>
+                    Продумываем путь клиента: как сделать так, чтобы он нашел кнопку "Купить" или "Позвонить" за 2 секунды.</p>
+                    
+                    <p><b>3. Верстка и Программирование</b><br>
+                    Пишем валидный код, настраиваем анимации и интерактив. Сайт будет "летать".</p>
+                    
+                    <p><b>4. Базовая SEO-оптимизация</b><br>
+                    В отличие от многих студий, мы сдаем проект готовым к продвижению: прописываем мета-теги, настраиваем карту сайта (sitemap) и заголовки.</p>
+                    
+                    <p style="margin-bottom: 0;"><b>5. Обучение и Поддержка</b><br>
+                    Переносим сайт на ваш домен. Учим вас пользоваться админкой, чтобы вы могли сами менять цены или добавлять новости.</p>
+                </div>
+
+                <hr style="margin: 40px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+
+                <h2>Часто задаваемые вопросы (FAQ)</h2>
+
+                <h3>Сколько стоит разработка сайта в Тбилиси?</h3>
+                <p><b>От $400 за лендинг до $2000+ за сложный интернет-магазин.</b> Это честная цена за качественную работу под ключ без скрытых доплат. Точная стоимость рассчитывается после обсуждения функционала.</p>
+
+                <h3>Какие сроки создания проекта?</h3>
+                <p><b>В среднем от 7 дней до 1 месяца.</b> Лендинг мы делаем за 1-2 недели, корпоративный сайт за 3-4 недели, а интернет-магазин от 4 недель. Все сроки жестко фиксируются в договоре.</p>
+
+                <h3>Смогу ли я сам управлять контентом?</h3>
+                <p><b>Да, вы сможете менять тексты и фото без помощи программиста.</b> Мы разрабатываем сайты на удобных CMS (системах управления) и проводим обучение для вас или ваших сотрудников.</p>
+
+                <h3>Вы работаете только в Грузии?</h3>
+                <p><b>Наш офис в Тбилиси, но мы работаем по всему миру.</b> Все коммуникации и оплата проходят онлайн.</p>
+
+                <hr style="margin: 40px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+
+                <h2>Почему выбирают Digital Craft?</h2>
+                <ul>
+                    <li><b>Ориентация на продажи:</b> Мы делаем сайты, которые продают, а не просто "висят" в интернете.</li>
+                    <li><b>SEO-фундамент:</b> Поисковики полюбят ваш ресурс сразу после запуска.</li>
+                    <li><b>Прозрачность:</b> Вы видите процесс работы и понимаете, за что платите.</li>
+                    <li><b>Поддержка:</b> Мы не исчезаем после сдачи проекта. Всегда на связи.</li>
+                </ul>
+
+                <p style="margin-top: 40px; font-weight: 600; opacity: 0.9; font-size: 1.2em;">Нужен современный сайт для бизнеса?</p>
+                <p>Свяжитесь с нами для бесплатной консультации и расчета стоимости.</p>
+
+                <ul style="font-size: 1.1em; list-style: none; padding-left: 0; margin-top: 15px;">
+                    <li style="margin-bottom: 15px;">
+                        <a href="https://wa.me/79119396075" target="_blank" rel="noopener noreferrer" style="color: #b8d8e8; text-decoration: none; border-bottom: 1px solid rgba(184, 216, 232, 0.3); padding-bottom: 2px;">
+                            WhatsApp
+                        </a>
+                    </li>
+                    <li style="margin-bottom: 15px;">
+                        <a href="https://t.me/ramashery" target="_blank" rel="noopener noreferrer" style="color: #b8d8e8; text-decoration: none; border-bottom: 1px solid rgba(184, 216, 232, 0.3); padding-bottom: 2px;">
+                            Telegram
+                        </a>
+                    </li>
+                    <li>
+                        <a href="tel:+995591102653" style="color: #b8d8e8; text-decoration: none; border-bottom: 1px solid rgba(184, 216, 232, 0.3); padding-bottom: 2px;">
+                            +995 591 102 653
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </section>
+        
+        <!-- Секция Related Posts появится автоматически благодаря JS -->
+    </main>
+    
+    <footer class="site-footer" id="site-footer">
+        © 2025 Digital Craft. Все права защищены.
+    </footer>
+    
+    <!-- Main Application Script -->
+    <script type="module" src="/main.js"></script>
+    
+    <!-- Yandex Metrika -->
+    <script type="text/javascript">
+        function loadYandexMetrika() {
+            (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+            (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+    
+            ym(103413242, "init", {
+                 clickmap:true,
+                 trackLinks:true,
+                 accurateTrackBounce:true,
+                 webvisor:true
+            });
+        }
+        setTimeout(loadYandexMetrika, 3000); 
+    </script>
+</body>
+</html>
