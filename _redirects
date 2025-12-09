@@ -1,1 +1,12 @@
- /*    /index.html    200
+   # СТАТИЧЕСКИЕ - БЕЗ РЕДИРЕКТА
+/en/services/custom-web-development-tbilisi* /en/services/custom-web-development-tbilisi/index.html 200
+/en/services/seo-optimization-tbilisi* /en/services/seo-optimization-tbilisi/index.html 200
+/ru/services/razrabotka-saitov-tbilisi* /ru/services/razrabotka-saitov-tbilisi/index.html 200
+/ru/services/seo-prodvizhenie-tbilisi* /ru/services/seo-prodvizhenie-tbilisi/index.html 200
+
+# ЯЗЫКОВЫЕ ХОМЫ
+/ru /ru/ 301!
+/en /en/ 301!
+
+# SPA FALLBACK
+/* /index.html 200
