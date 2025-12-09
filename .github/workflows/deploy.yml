@@ -1,4 +1,4 @@
-  # Название процесса, которое будет отображаться в GitHub Actions
+   # Название процесса, которое будет отображаться в GitHub Actions
 name: Deploy to Firebase Hosting
 
 # Триггер: запускать этот процесс при каждом push в ветку 'main'
@@ -16,8 +16,8 @@ jobs:
       # 1. Шаг: Скачиваем исходный код вашего репозитория
       - uses: actions/checkout@v3
 
-      # 2. Шаг: Разворачиваем сайт на Firebase Hosting (ИСПОЛЬЗУЕМ НОВУЮ ВЕРСИЮ)
-      - uses: FirebaseExtended/action-hosting-deploy@v0.9.1 # <--- ВОТ ГЛАВНОЕ ИЗМЕНЕНИЕ!
+      # 2. Шаг: Разворачиваем сайт на Firebase Hosting (ПРАВИЛЬНАЯ ВЕРСИЯ)
+      - uses: FirebaseExtended/action-hosting-deploy@v0.9.0 # <--- ИЗМЕНЕНИЕ ЗДЕСЬ! v0.9.0 вместо v0.9.1
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           # Используем секрет с токеном, как и планировали
