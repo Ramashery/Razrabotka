@@ -1,0 +1,6 @@
+# БЕЗ СЛЭША → С СЛЭШЕМ (статические страницы)
+/:lang/:section/:slug /:lang/:section/:slug/ 301!
+/:lang /:lang/ 301!
+
+# ВСЁ ОСТАЛЬНОЕ → SPA
+/* /index.html 200
