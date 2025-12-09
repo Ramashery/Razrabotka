@@ -1,4 +1,4 @@
-   # Название процесса
+    # Название процесса
 name: Deploy to Firebase Hosting
 
 # Триггер на push в ветку main
@@ -14,10 +14,10 @@ jobs:
       # 1. Скачиваем код
       - uses: actions/checkout@v3
 
-      # 2. Разворачиваем сайт, используя СТАРЫЙ, НАДЕЖНЫЙ МЕТОД
+      # 2. Разворачиваем сайт
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          # Возвращаемся к нашему самому первому секрету
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}'
+          channelId: live  # <--- ВОТ ЭТА СТРОКА РЕШИТ ПРОБЛЕМУ
           projectId: 'razrabotka-b61bc'
