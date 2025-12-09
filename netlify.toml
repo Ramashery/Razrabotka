@@ -1,0 +1,27 @@
+[[headers]]
+for = "/*"
+[headers.values]
+Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+for = "/assets/*"
+[headers.values]
+Cache-Control = "public, max-age=31536000, immutable"
+
+# ✅ ФИНАЛЬНЫЕ РЕДИРЕКТЫ
+[[redirects]]
+from = "/:lang/:section/:slug"
+to = "/:lang/:section/:slug/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/:lang"
+to = "/:lang/"
+status = 301
+force = true
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
