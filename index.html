@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>Web Development & SEO Services in Tbilisi, Georgia | Digital Craft</title>
+    <meta name="description" content="Professional website development and SEO for small and medium businesses in Tbilisi. Get a fast, modern, and results-driven website. Contact us for a free consultation!">
+    
+    <!-- Canonical Link -->
+    <link rel="canonical" href="https://digital-craft-tbilisi.site/" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Web Development & SEO Services in Tbilisi, Georgia | Digital Craft">
+    <meta property="og:description" content="Professional website development and SEO for small and medium businesses in Tbilisi. Get a fast, modern, and results-driven website.">
+    <meta property="og:image" content="https://digital-craft-tbilisi.site/favicon.svg">
+    <meta property="og:type" content="website">
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+    <!-- Fonts: Preconnect & Swap -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="/styles.css">
+
+    <!-- Styles for Loader only -->
+    <style>
+        #loader { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: #030409; 
+            display: flex; justify-content: center; align-items: center; 
+            z-index: 10000; 
+            transition: opacity 0.5s ease-out; 
+        }
+        .spinner { 
+            width: 50px; height: 50px; 
+            border: 3px solid #b8d8e8; 
+            border-radius: 50%; 
+            border-top-color: transparent; 
+            animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* --- MOBILE HERO ADJUSTMENTS --- */
+        @media (max-width: 767px) {
+            .hero {
+                min-height: 100vh; /* Занимает всю высоту экрана */
+                padding-bottom: 0;
+                margin-bottom: 0;
+                box-sizing: border-box;
+            }
+            
+            .hero h1 {
+                font-size: clamp(2rem, 8vw, 2.8rem); /* Более гармоничный размер */
+                margin-bottom: 20px;
+                line-height: 1.1;
+            }
+            
+            .hero-subtitle-container p {
+                font-size: 1.1rem;
+                line-height: 1.5;
+                margin-bottom: 25px;
+            }
+            
+            .hero-contact-list {
+                font-size: 1rem;
+                padding-left: 20px;
+            }
+            
+            /* Скрываем следующую секцию, если hero не на всю высоту */
+            #services {
+                margin-top: 0;
+            }
+        }
+        
+        /* --- HERO FULL HEIGHT FIX --- */
+        .hero {
+            min-height: 100vh;
+        }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js" defer></script>
+    
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": ["ProfessionalService", "LocalBusiness"], 
+      "name": "Digital Craft Tbilisi",
+      "description": "Professional website development and SEO for small and medium businesses in Tbilisi. Get a fast, modern, and results-driven website.",
+      "url": "https://digital-craft-tbilisi.site/",
+      "logo": "https://digital-craft-tbilisi.site/favicon.svg", 
+      "image": "https://digital-craft-tbilisi.site/favicon.svg",
+      "telephone": "+995 591 102 653",
+      "priceRange": "$$",
+      "address": { "@type": "PostalAddress", "addressLocality": "Tbilisi", "addressCountry": "GE" },
+      "geo": { "@type": "GeoCoordinates", "latitude": "41.7151", "longitude": "44.8271" },
+      "areaServed": { "@type": "City", "name": "Tbilisi" },
+      "openingHoursSpecification": { "@type": "OpeningHoursSpecification", "dayOfWeek": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ], "opens": "10:00", "closes": "19:00" },
+      "sameAs": [ "https://wa.me/79119396075", "https://t.me/ramashery" ],
+      "hasOfferCatalog": { "@type": "OfferCatalog", "name": "Web Development and SEO Services", "itemListElement": [ { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Custom Web Development", "url": "https://digital-craft-tbilisi.site/en/services/custom-web-development-tbilisi/" } }, { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "SEO Optimization", "url": "https://digital-craft-tbilisi.site/en/services/seo-optimization-tbilisi/" } } ] }
+    }
+    </script>
+</head>
+<body data-static-page="false">
+    
+    <!-- ================== ИЗМЕНЕНИЕ ЗДЕСЬ ================== -->
+    <script>
+        // Этот скрипт-сторож скрывает контент главной страницы,
+        // если пользователь загружает внутреннюю страницу напрямую.
+        const path = window.location.pathname;
+        const isHomePage = path === '/' || path.endsWith('/index.html');
+        
+        // Если это НЕ главная страница, то прячем <main>
+        if (!isHomePage) {
+            // Используем visibility: hidden, чтобы не было скачка макета (CLS)
+            document.documentElement.style.setProperty('--main-visibility', 'hidden');
+        }
+        
+        // --- ПОВТОРНАЯ АНИМАЦИЯ HERO ПРИ ВОЗВРАЩЕНИИ С ВНУТРЕННИХ СТРАНИЦ ---
+        function reanimateHero() {
+            const heroH1 = document.querySelector('.hero h1');
+            const heroSubtitle = document.querySelector('.hero-subtitle-container');
+            
+            if (!heroH1 || !heroSubtitle) return;
+            
+            // Сбрасываем классы анимации
+            heroH1.classList.remove('is-visible');
+            heroSubtitle.classList.remove('is-visible');
+            
+            // Ждём следующего кадра и добавляем обратно
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    heroH1.classList.add('animate-always');
+                    heroSubtitle.classList.add('animate-always');
+                    
+                    // Запускаем анимацию с небольшой задержкой
+                    setTimeout(() => {
+                        heroH1.classList.add('is-visible');
+                        heroSubtitle.classList.add('is-visible');
+                    }, 50);
+                });
+            });
+        }
+    </script>
+    <!-- ====================================================== -->
+    
+    <div id="loader"><div class="spinner"></div></div>
+    
+    <iframe id="custom-background-iframe" title="Custom Background" style="display:none;"></iframe>
+    
+    <button class="menu-toggle" aria-label="Toggle menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+    
+    <div class="nav-overlay">
+        <ul class="nav-menu"></ul>
+    </div>
+
+    <!-- Статический Hero остается на месте для быстрой загрузки главной -->
+    <main class="loading">
+        <section id="hero" class="hero">
+            <h1>Web Development & SEO in Tbilisi</h1>
+            <div class="hero-subtitle-container">
+                <p>We create high-performance websites for Georgian businesses that attract clients and boost revenue. Modern design, cutting-edge technology, and measurable results.</p>
+                <ul class="hero-contact-list">
+                    <li><a href="https://wa.me/79119396075" target="_blank" rel="noopener noreferrer">WhatsApp</a></li>
+                    <li><a href="https://t.me/ramashery" target="_blank" rel="noopener noreferrer">Telegram</a></li>
+                    <li><a href="tel:+995591102653">+995 591 102 653</a></li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="services"></section>
+        <section id="portfolio"></section>
+        <section id="blog"></section>
+        <section id="contact"></section>
+
+        <noscript>
+            <section>
+                <h2>Our Services</h2>
+                <ul>
+                    <li><a href="/en/services/custom-web-development-tbilisi/">Web Development</a></li>
+                    <li><a href="/en/services/seo-optimization-tbilisi/">SEO Optimization</a></li>
+                </ul>
+            </section>
+        </noscript>
+    </main>
+    
+    <footer class="site-footer" id="site-footer"></footer>
+    
+    <script type="module" src="/main.js"></script>
+    
+    <script type="text/javascript">
+        function loadYandexMetrika() {
+            (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+            (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+    
+            ym(103413242, "init", {
+                 clickmap:true,
+                 trackLinks:true,
+                 accurateTrackBounce:true,
+                 webvisor:true
+            });
+        }
+        setTimeout(loadYandexMetrika, 4500);
+        
+        // --- МОДИФИКАЦИЯ ФУНКЦИИ routeAndRender В main.js ---
+        // Мы добавим обёртку для существующей функции
+        document.addEventListener('DOMContentLoaded', function() {
+            // Сохраняем оригинальную функцию
+            const originalRouteAndRender = window.routeAndRender;
+            
+            if (originalRouteAndRender && typeof originalRouteAndRender === 'function') {
+                // Создаём новую версию функции
+                window.routeAndRender = function(isPopState = false) {
+                    // Вызываем оригинальную функцию
+                    const result = originalRouteAndRender.call(this, isPopState);
+                    
+                    // Дополнительная логика для анимации hero
+                    const path = window.location.pathname;
+                    const detailPageRegex = /^\/(?:([a-z]{2})\/)?(services|portfolio|blog|contact)\/([a-zA-Z0-9-]+)\/?$/;
+                    const match = path.match(detailPageRegex);
+                    
+                    // Если это главная страница (не детальная), анимируем hero
+                    if (!match) {
+                        setTimeout(() => {
+                            reanimateHero();
+                        }, 100);
+                    }
+                    
+                    return result;
+                };
+            }
+        });
+    </script>
+
+</body>
+</html>
