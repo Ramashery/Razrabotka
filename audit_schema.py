@@ -3,11 +3,10 @@ import json
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-# --- НАСТРОЙКИ ---
-COLLECTIONS_TO_CHECK = ['services'] # Можно добавить 'blog', 'portfolio'
+# --- ТЕПЕРЬ ПРОВЕРЯЕМ ВСЕ РАЗДЕЛЫ ---
+COLLECTIONS_TO_CHECK = ['services', 'blog', 'portfolio']
 
-# --- ПОДКЛЮЧЕНИЕ ---
-print("--- [1] ЗАПУСК АУДИТА SCHEMA.ORG ---")
+print("--- [1] ЗАПУСК ПОЛНОГО АУДИТА САЙТА ---")
 try:
     cred = None
     if os.environ.get('FIREBASE_SERVICE_ACCOUNT'):
@@ -26,93 +25,90 @@ except Exception as e:
     print(f"❌ Ошибка подключения: {e}")
     exit(1)
 
-# --- ЛОГИКА ПРОВЕРКИ ---
-def check_schema(doc_id, url_slug, schema_raw):
+def check_schema(doc_id, url_slug, schema_raw, collection_name):
     status = "✅ OK"
     errors = []
     
-    # 1. Проверка на пустоту
     if not schema_raw:
         return "❌ ПУСТО", ["Поле schemaJsonLd пустое"]
 
-    # 2. Попытка прочитать JSON
     data = None
     if isinstance(schema_raw, str):
         try:
             data = json.loads(schema_raw)
         except json.JSONDecodeError:
-            return "❌ JSON ERROR", ["Синтаксическая ошибка (лишняя запятая или скобка)"]
+            return "❌ JSON ERROR", ["Синтаксическая ошибка"]
     else:
-        data = schema_raw # Если уже объект
+        data = schema_raw
 
-    # 3. Проверка структуры (должен быть Список [...])
+    # Проверка формата
     if isinstance(data, dict):
-        errors.append("⚠️ СТАРЫЙ ФОРМАТ: Используется объект {}, а нужен список []")
-        # Превращаем в список для дальнейшей проверки
+        # Для Блога и Портфолио одиночный объект - это НОРМАЛЬНО (там не обязателен FAQ)
+        # Но для Услуг мы хотим список.
+        if collection_name == 'services':
+            errors.append("⚠️ СТАРЫЙ ФОРМАТ (Нужен список [])")
         data = [data]
     elif not isinstance(data, list):
         return "❌ ФОРМАТ", ["Непонятный формат данных"]
 
-    # 4. Проверка содержимого
-    has_service = False
-    has_faq = False
+    has_service_or_article = False
     missing_fields = []
 
     for item in data:
         item_type = item.get('@type', '')
         
-        # Проверка Услуги
-        if 'Service' in item_type or 'LocalBusiness' in item_type:
-            has_service = True
-            if not item.get('name'):
-                missing_fields.append("Service: нет 'name'")
-            if not item.get('image'):
-                missing_fields.append("Service: нет 'image'")
+        # Проверяем основные типы
+        if any(x in item_type for x in ['Service', 'Article', 'BlogPosting', 'CreativeWork', 'LocalBusiness']):
+            has_service_or_article = True
             
-            # Проверка вложенного провайдера (если есть)
-            provider = item.get('provider', {})
-            if provider and isinstance(provider, dict):
-                 if not provider.get('image'):
-                     missing_fields.append("Provider: нет 'image'")
+            # Проверка обязательных полей для Google
+            if not item.get('name') and not item.get('headline'):
+                missing_fields.append("Нет 'name'/'headline'")
+            if not item.get('image'):
+                missing_fields.append("Нет 'image'")
+                
+            # Проверка автора/провайдера
+            author = item.get('author') or item.get('provider')
+            if author and isinstance(author, dict):
+                 if not author.get('image'):
+                     missing_fields.append("Author/Provider: нет 'image'")
 
-        # Проверка FAQ
-        if 'FAQPage' in item_type:
-            has_faq = True
-            questions = item.get('mainEntity', [])
-            if not questions:
-                missing_fields.append("FAQ: нет вопросов")
-
-    if not has_service:
-        errors.append("❌ НЕТ УСЛУГИ: Отсутствует @type: Service")
-    
-    if not has_faq:
-        errors.append("⚠️ НЕТ FAQ: Отсутствует @type: FAQPage")
+    if not has_service_or_article:
+        errors.append("❌ ТИП: Не найден Service или Article")
 
     if missing_fields:
         errors.append(f"❌ ОШИБКИ ПОЛЕЙ: {', '.join(missing_fields)}")
 
-    # Итоговый статус
     if any("❌" in e for e in errors):
         status = "❌ ОШИБКА"
     elif errors:
-        status = "⚠️ ПРЕДУПРЕЖДЕНИЕ"
+        status = "⚠️ ВНИМАНИЕ"
 
     return status, errors
 
-# --- ЗАПУСК ПО КОЛЛЕКЦИЯМ ---
+# --- ЗАПУСК ---
 for col in COLLECTIONS_TO_CHECK:
     print(f"\n📂 КОЛЛЕКЦИЯ: {col.upper()}")
     print(f"{'URL SLUG':<35} | {'СТАТУС':<15} | {'КОММЕНТАРИИ'}")
     print("-" * 100)
     
-    docs = db.collection(col).stream()
-    for doc in docs:
-        doc_data = doc.to_dict()
-        slug = doc_data.get('urlSlug', doc.id)
-        raw_schema = doc_data.get('schemaJsonLd')
-        
-        status, issues = check_schema(doc.id, slug, raw_schema)
-        
-        print(f"{slug:<35} | {status:<15} | {', '.join(issues)}")
+    try:
+        docs = db.collection(col).stream()
+        for doc in docs:
+            doc_data = doc.to_dict()
+            slug = doc_data.get('urlSlug', doc.id)
+            raw_schema = doc_data.get('schemaJsonLd')
+            
+            status, issues = check_schema(doc.id, slug, raw_schema, col)
+            
+            if status != "✅ OK": # Показываем только проблемные, чтобы не засорять
+                print(f"{slug:<35} | {status:<15} | {', '.join(issues)}")
+            else:
+                 # Если хотите видеть и хорошие, раскомментируйте строку ниже
+                 # print(f"{slug:<35} | {status:<15} | OK")
+                 pass
+                 
+    except Exception as e:
+        print(f"Ошибка чтения коллекции {col}: {e}")
 
 print("\n--- АУДИТ ЗАВЕРШЕН ---")
