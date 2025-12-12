@@ -32,7 +32,7 @@ jobs:
 
       # 4. Запускаем сам скрипт генерации сайта. Он создаст папку 'public'
       - name: Generate Static HTML files
-        run: python generate_site_debug.py
+        run: python generate_site.py
         env:
           # ВАЖНО: Убедитесь, что имя секрета здесь совпадает с вашим
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}
