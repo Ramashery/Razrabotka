@@ -1,7 +1,8 @@
- 
-  {
+{
   "hosting": {
     "public": "public",
+    "cleanUrls": true,
+    "trailingSlash": true,
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -25,12 +26,6 @@
             "value": "public, max-age=0, must-revalidate"
           }
         ]
-      }
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
       }
     ]
   }
