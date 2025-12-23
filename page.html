@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 
+      SEO-теги (title, description, canonical, Open Graph, Schema.org) 
+      будут добавлены динамически скриптом main.js через функцию renderSeoTags().
+      Оставлять их здесь не нужно.
+    -->
+    <title>Digital Craft</title> <!-- Временный заголовок до загрузки скрипта -->
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+    <!-- Шрифты и стили остаются без изменений -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+
+    <!-- Стили для загрузчика -->
+    <style>
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #030409; display: flex; justify-content: center; align-items: center; z-index: 10000; transition: opacity 0.5s ease-out; }
+        .spinner { width: 50px; height: 50px; border: 3px solid #b8d8e8; border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+
+    <!-- Скрипты Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js" defer></script>
+</head>
+<body data-static-page="false">
+    
+    <!-- Элементы интерфейса, которые являются частью общей оболочки -->
+    <div id="loader"><div class="spinner"></div></div>
+    
+    <iframe id="custom-background-iframe" title="Custom Background" style="display:none;"></iframe>
+    
+    <button class="menu-toggle" aria-label="Toggle menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+    
+    <div class="nav-overlay">
+        <ul class="nav-menu"></ul> <!-- Меню будет заполнено динамически -->
+    </div>
+
+    <!-- 
+      Основной контейнер для контента.
+      Он изначально пуст и имеет класс 'loading' для скрытия до полной отрисовки.
+      Скрипт main.js наполнит его содержимым главной или внутренней страницы.
+    -->
+    <main class="loading"></main>
+    
+    <!-- Футер также будет наполнен и управляться скриптом -->
+    <footer class="site-footer" id="site-footer"></footer>
+    
+    <!-- Основной скрипт приложения -->
+    <script type="module" src="/main.js"></script>
+    
+    <!-- Скрипт для аналитики (без изменений) -->
+    <script type="text/javascript">
+        function loadYandexMetrika() {
+            (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+            (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+    
+            ym(103413242, "init", {
+                 clickmap:true,
+                 trackLinks:true,
+                 accurateTrackBounce:true,
+                 webvisor:true
+            });
+        }
+        setTimeout(loadYandexMetrika, 4500);
+    </script>
+
+</body>
+</html>
