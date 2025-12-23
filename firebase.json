@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "raz2raz2",
+    "site": "razrabotka-b61bc",
     "public": "public",
     "ignore": [
       "firebase.json",
