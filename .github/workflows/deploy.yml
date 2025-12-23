@@ -10,8 +10,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # ================== ИЗМЕНЕНИЯ ЗДЕСЬ ==================
-      # Шаги сборки Python теперь активированы для SSG
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -24,14 +22,15 @@ jobs:
       
       - name: Generate Site
         env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # ИЗМЕНЕНИЕ 1: Используем ваш новый секрет для сборки сайта
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}
         run: python generate_site.py
-      # ======================================================
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # ИЗМЕНЕНИЕ 2: Используем ваш новый секрет для развертывания
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}
           channelId: live
           projectId: razrabotka-b61bc
