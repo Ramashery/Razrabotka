@@ -1,3 +1,4 @@
+print("!!! ВЫПОЛНЯЕТСЯ НОВАЯ ВЕРСИЯ ФАЙЛА generate_site.py !!!")
 import os
 import json
 import re
