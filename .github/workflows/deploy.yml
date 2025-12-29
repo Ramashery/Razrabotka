@@ -20,17 +20,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install firebase-admin jinja2
       
-      - name: Generate Site
+      # --- ИЗМЕНЕННЫЙ ШАГ ---
+      # Вместо генерации сайта, мы временно запускаем диагностический скрипт.
+      # Также изменил 'name' для ясности в логах.
+      - name: Run Sitemap Diagnostic Script
         env:
-          # ИЗМЕНЕНИЕ 1: Используем ваш новый секрет для сборки сайта
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}
-        run: python generate_site.py
+        run: python test_sitemap_data.py
 
+      # Шаг развертывания останется, но он не получит новых файлов от генератора.
+      # Это нормально для теста. Главное - посмотреть лог шага "Run Sitemap Diagnostic Script".
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          # ИЗМЕНЕНИЕ 2: Используем ваш новый секрет для развертывания
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}
           channelId: live
           projectId: razrabotka-b61bc
