@@ -22,13 +22,18 @@ jobs:
       
       - name: Generate Site
         env:
+          # Здесь все было правильно
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}
+        # Запускаем тестовую версию скрипта, как договорились
         run: python generate_site.py
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBALL_SERVICE_ACCOUNT_RAZRABOTKA }}
+          # --- ИСПРАВЛЕННАЯ СТРОКА ---
+          # Было: FIREBALL...
+          # Стало: FIREBASE...
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}
           channelId: live
           projectId: razrabotka-b61bc
