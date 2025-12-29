@@ -8,14 +8,9 @@
       "**/node_modules/**"
     ],
     
-    // --- ДОБАВЛЕНО: Правила для красивых SEO-ссылок ---
-    "cleanUrls": true,  // Позволяет обращаться к /page вместо /page.html
-    "trailingSlash": true, // Автоматически добавляет / в конец URL, чтобы /page стал /page/
+    "cleanUrls": true,
+    "trailingSlash": true, 
 
-    // --- ДОБАВЛЕНО: Правила переадресации ---
-    // Это самое важное правило для гибридных сайтов.
-    // Оно говорит Firebase: "Сначала попробуй найти реальный файл или папку.
-    // И только если ничего не найдено, отдай /index.html для работы JavaScript-роутера".
     "rewrites": [
       {
         "source": "**",
@@ -23,8 +18,16 @@
       }
     ],
 
-    // Ваш блок с заголовками кеширования остается без изменений, он настроен хорошо.
     "headers": [
+      {
+        "source": "/sitemap.xml",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
       {
         "source": "**/*.@(js|css|svg|png|jpg|webp|woff|woff2)",
         "headers": [
