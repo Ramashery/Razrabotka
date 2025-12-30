@@ -12,15 +12,10 @@
     "trailingSlash": true, 
 
     "rewrites": [
-      // *** ВАЖНОЕ ИСПРАВЛЕНИЕ: Это правило должно идти ПЕРВЫМ! ***
-      // Оно явно указывает Firebase отдавать файл sitemap.xml, если он запрошен,
-      // предотвращая его перезапись универсальным правилом ниже.
       {
         "source": "/sitemap.xml",
         "destination": "/sitemap.xml"
       },
-      // Универсальное правило для всех остальных запросов, которые не соответствуют
-      // существующему файлу или папке, перенаправляет на index.html.
       {
         "source": "**",
         "destination": "/index.html"
@@ -34,6 +29,10 @@
           {
             "key": "Cache-Control",
             "value": "no-cache, no-store, must-revalidate"
+          },
+          { // *** ДОБАВЛЯЕМ ЭТОТ ЗАГОЛОВОК ***
+            "key": "Content-Type",
+            "value": "application/xml"
           }
         ]
       },
