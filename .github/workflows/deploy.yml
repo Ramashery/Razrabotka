@@ -1,8 +1,19 @@
-name: Deploy to Real Site
+name: Build and Deploy to GitHub Pages
+
 on:
+  # Запускать автоматически при любом изменении в основной ветке
   push:
     branches:
       - main
+  # Позволяет запускать этот воркфлоу вручную со страницы Actions
+  workflow_dispatch:
+
+# Настройка прав для GITHUB_TOKEN, чтобы разрешить развертывание на GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
@@ -22,13 +33,20 @@ jobs:
       
       - name: Generate Site
         env:
+          # Этот секрет по-прежнему нужен, чтобы скрипт мог получить данные из Firestore
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}
         run: python generate_site.py
 
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}
-          channelId: live
-          projectId: razrabotka-b61bc
+          # Указываем, какую папку загружать. Ваш скрипт создает папку 'public'
+          path: './public'
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pag
+nam
