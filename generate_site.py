@@ -458,7 +458,17 @@ def main():
         generate_sitemap_xml(valid_pages_for_sitemap, all_data)
     else:
         print("! Не найдено валидных страниц для создания sitemap.xml. Файл не будет сгенерирован.")
-    
+    # --- ДОБАВЛЕННЫЙ БЛОК: Создание 404.html для поддержки SPA на GitHub Pages ---
+print("\nСоздание 404.html для SPA-роутинга...")
+index_path = os.path.join(OUTPUT_DIR, 'index.html')
+not_found_path = os.path.join(OUTPUT_DIR, '404.html')
+
+if os.path.exists(index_path):
+    shutil.copy2(index_path, not_found_path)
+    print("✓ Файл 404.html успешно создан как копия index.html.")
+else:
+    print("✗ ВНИМАНИЕ: Не удалось создать 404.html, так как index.html не найден в папке 'public'.")
+# --- КОНЕЦ ДОБАВЛЕННОГО БЛОКА ---
     print("\n" + "="*60)
     print("Генерация сайта полностью завершена!")
     print("="*60)
