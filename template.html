@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="{{ item.lang or 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+  (function() {
+    var path = window.location.pathname;
+    var search = window.location.search;
+    var hash = window.location.hash;
+    var newPath = path;
+    var needsRedirect = false;
+
+    // --- НАСТРОЙКИ ---
+    // Список языков, которые могут быть в URL
+    var supportedLangs = ['en', 'ka', 'ru', 'ua'];
+    // Список категорий, которые могут быть в URL
+    var supportedCategories = ['services', 'portfolio', 'blog', 'contact'];
+    
+    // Разбиваем путь на части, убирая пустые элементы (от слэшей)
+    var parts = path.split('/').filter(function(p) { return p !== ''; });
+
+    // 1. ПРОВЕРКА НА ИНДЕКСНУЮ СТРАНИЦУ КАТЕГОРИИ (например, /ru/blog)
+    // Путь должен состоять ровно из двух частей: [язык, категория]
+    if (parts.length === 2 && supportedLangs.indexOf(parts[0]) > -1 && supportedCategories.indexOf(parts[1]) > -1) {
+      // Это URL вида /ru/blog/. Перенаправляем на главную с якорем.
+      newPath = '/#' + parts[1]; // -> /#blog
+      needsRedirect = true;
+    } 
+    // 2. ПРОВЕРКА НА ЯЗЫКОВУЮ ГЛАВНУЮ СТРАНИЦУ (например, /ru)
+    // Путь должен состоять ровно из одной части: [язык]
+    else if (parts.length === 1 && supportedLangs.indexOf(parts[0]) > -1) {
+      // Это URL вида /ru/. Перенаправляем на корень.
+      newPath = '/';
+      needsRedirect = true;
+    } 
+    // 3. ОБЫЧНЫЕ ПРОВЕРКИ ДЛЯ ВАЛИДНЫХ СТРАНИЦ
+    else {
+      // 3.1. ПРОВЕРКА НА index.html
+      if (path.endsWith('/index.html')) {
+        newPath = path.substring(0, path.length - 'index.html'.length);
+        // Если после удаления index.html остался пустой путь, это главная
+        if (newPath === '') newPath = '/';
+        needsRedirect = true;
+      }
+      // 3.2. ПРОВЕРКА НА СЛЭШ В КОНЦЕ (для всех остальных внутренних страниц)
+      else if (path.length > 1 && !path.endsWith('/')) {
+        newPath += '/';
+        needsRedirect = true;
+      }
+    }
+
+    // Если нужно, выполняем перенаправление
+    if (needsRedirect) {
+      window.location.replace(newPath + search + hash);
+    }
+  })();
+</script>
+    <title>{{ item.seoTitle }}</title>
+    <meta name="description" content="{{ item.metaDescription }}">
+    
+    {# URL всегда включает язык для внутренних страниц #}
+    {% set canonical_url = "https://digital-craft-tbilisi.site/" + item.lang + '/' + item.collection_name + '/' + item.urlSlug + '/' %}
+    <link rel="canonical" href="{{ canonical_url }}" />
+
+    <!-- ================= НАЧАЛО БЛОКА HREFLANG ================= -->
+    {% if alternates and alternates|length > 1 %}
+        {# Сначала ищем английскую версию для x-default (рекомендация Google) #}
+        {% set en_version = alternates | selectattr('lang', 'equalto', 'en') | first %}
+        {% if en_version %}
+            {% set en_url = "https://digital-craft-tbilisi.site/" + en_version.lang + '/' + en_version.collection_name + '/' + en_version.urlSlug + '/' %}
+            <link rel="alternate" hreflang="x-default" href="{{ en_url }}" />
+        {% endif %}
+
+        {# Теперь проходим по всем доступным языковым версиям #}
+        {% for alt in alternates %}
+            {% set alt_url = "https://digital-craft-tbilisi.site/" + alt.lang + '/' + alt.collection_name + '/' + alt.urlSlug + '/' %}
+            <link rel="alternate" hreflang="{{ alt.lang }}" href="{{ alt_url }}" />
+        {% endfor %}
+    {% endif %}
+    <!-- ================= КОНЕЦ БЛОКА HREFLANG ================== -->
+
+    <meta property="og:title" content="{{ item.ogTitle or item.seoTitle }}">
+    <meta property="og:description" content="{{ item.ogDescription or item.metaDescription }}">
+    <meta property="og:image" content="{{ (item.media or ['/favicon.svg']) | first }}">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ canonical_url }}">
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/styles.css">
+
+    <!-- Индивидуальная схема страницы (Service / Article / etc.) -->
+    {% if item.schemaJsonLd %}
+    <script type="application/ld+json">
+    {{ item.schemaJsonLd | tojson | safe }}
+    </script>
+    {% endif %}
+
+    <style>
+      :root { --main-visibility: visible !important; }
+    </style>
+</head>
+<body data-static-page="true">
+    
+    <iframe id="custom-background-iframe" title="Custom Background" style="display:none;"></iframe>
+    
+    <button class="menu-toggle" aria-label="Toggle menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+    <div class="nav-overlay">
+        <ul class="nav-menu"></ul>
+    </div>
+
+    <main>
+        <section>
+            <div class="detail-page-header">
+                <h1>{{ item.h1 or item.title }}</h1>
+                {% if item.price %}<div class="detail-price">{{ item.price }}</div>{% endif %}
+            </div>
+            <div class="detail-content">
+                {{ format_content(item.mainContent) | safe }}
+            </div>
+        </section>
+        
+        {% if related_items %}
+        <section id="related-posts">
+            <h2>You Might Also Like</h2>
+            <div class="item-grid">
+            {% for related in related_items %}
+                {% set related_url = '/' + related.lang + '/' + related.collection_name + '/' + related.urlSlug + '/' %}
+                <a href="{{ related_url }}" class="item-card">
+                    <div class="item-card__image" style="background-image: url('{{ (related.media or ['']) | first }}')"></div>
+                    <div class="item-card__content">
+                        <h3>{{ related.title }}</h3>
+                        <div class="card-subtitle">{{ related.subtitle }}</div>
+                        <p>{{ related.description }}</p>
+                    </div>
+                </a>
+            {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <button id="scroll-to-top-btn" title="Наверх">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                <path fill="none" d="M0 0h24v24H0z"/>
+                <path d="M13 7.828V20h-2V7.828l-5.364 5.364-1.414-1.414L12 4l7.778 7.778-1.414 1.414L13 7.828z"/>
+            </svg>
+        </button>
+
+    </main>
+    
+    <footer class="site-footer" id="site-footer"></footer>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js" defer></script>
+    
+    <script type="module" src="/main.js"></script>
+
+</body>
+</html>
