@@ -4,5 +4,11 @@ User-agent: *
 # Разрешить сканирование всего сайта.
 Allow: /
 
+# Запретить сканирование админ-панели и связанных с ней файлов.
+# Это предотвратит индексацию этих страниц и сэкономит краулинговый бюджет.
+Disallow: /admin.html
+Disallow: /admin.js
+Disallow: /admin.css
+
 # Указать путь к карте сайта.
 Sitemap: https://digital-craft-tbilisi.site/sitemap.xml
