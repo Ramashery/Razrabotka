@@ -1,4 +1,4 @@
---- START OF FILE main.js ---
+
 
 // --- FIREBASE CONFIGURATION ---
 const firebaseConfig = {
