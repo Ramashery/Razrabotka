@@ -1,0 +1,49 @@
+{# carousel_template.html #}
+
+{# This section will be injected into template.html.
+   It includes its own CSS link, but the JS link will be in template.html body. #}
+<link rel="stylesheet" href="/carousel.css">
+
+<section id="carousel-section" style="margin-top: 80px; margin-bottom: 80px;">
+    {# You can make this title dynamic by passing it from generate_site.py if needed #}
+    <h2 style="text-align: center; margin-bottom: 50px;" class="animate-on-scroll">Featured Projects</h2>
+    
+    <div class="mzaCarousel" id="mzaCarousel" aria-roledescription="carousel" aria-label="Featured cards">
+        <div class="mzaCarousel-viewport" tabindex="0">
+            <div class="mzaCarousel-track">
+                {% for item in carousel_items %}
+                    <article class="mzaCarousel-slide" role="group" aria-roledescription="slide" aria-label="{{ loop.index }} of {{ carousel_items|length }}">
+                        <div class="mzaCard" style="--mzaCard-bg:url('{{ item.imageUrl }}');">
+                            <header class="mzaCard-head mzaPar-1">
+                                <h2 class="mzaCard-title">{{ item.title }}</h2>
+                                <p class="mzaCard-kicker">{{ item.kicker }}</p>
+                            </header>
+                            <p class="mzaCard-text mzaPar-2">{{ item.description }}</p>
+                            <footer class="mzaCard-actions mzaPar-3">
+                                <a href="{{ item.buttonLink }}" class="mzaBtn">{{ item.buttonText }}</a>
+                            </footer>
+                        </div>
+                    </article>
+                {% else %}
+                    {# Optional: Message if no carousel items are available #}
+                    <p style="text-align: center; color: var(--color-text); opacity: 0.7;">No featured projects available.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Only render controls and pagination if there are slides #}
+        {% if carousel_items|length > 0 %}
+            <div class="mzaCarousel-controls" aria-label="Controls">
+                <button class="mzaCarousel-prev" aria-label="Previous slide" type="button">‹</button>
+                <button class="mzaCarousel-next" aria-label="Next slide" type="button">›</button>
+            </div>
+
+            <div class="mzaCarousel-pagination" role="tablist" aria-label="Slide navigation"></div>
+            <div class="mzaCarousel-progress" aria-hidden="true"><span class="mzaCarousel-progressBar"></span></div>
+        {% endif %}
+    </div>
+</section>
+
+{# The carousel.js script will be loaded once in template.html's body,
+   and then initMzaCarousel will be called from main.js.
+   So, we don't need a <script> tag here. #}
