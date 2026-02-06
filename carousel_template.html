@@ -1,0 +1,41 @@
+{# carousel_template.html #}
+
+{# CSS карусели уже должен быть подключен в <head> template.html #}
+
+<section id="carousel-section-{{ carousel_id }}" style="margin-top: 80px; margin-bottom: 80px;">
+    {# Можно добавить заголовок группы, если он нужен, но пока оставим без него для гибкости #}
+    
+    <!-- Используем динамический ID для поддержки нескольких каруселей -->
+    <div class="mzaCarousel" id="{{ carousel_id }}" aria-roledescription="carousel" aria-label="Featured cards">
+        <div class="mzaCarousel-viewport" tabindex="0">
+            <div class="mzaCarousel-track">
+                {% for item in carousel_items %}
+                    <article class="mzaCarousel-slide" role="group" aria-roledescription="slide" aria-label="{{ loop.index }} of {{ carousel_items|length }}">
+                        <div class="mzaCard" style="--mzaCard-bg:url('{{ item.imageUrl }}');">
+                            <header class="mzaCard-head mzaPar-1">
+                                <h2 class="mzaCard-title">{{ item.title }}</h2>
+                                <p class="mzaCard-kicker">{{ item.kicker }}</p>
+                            </header>
+                            <p class="mzaCard-text mzaPar-2">{{ item.description }}</p>
+                            <footer class="mzaCard-actions mzaPar-3">
+                                <a href="{{ item.buttonLink }}" class="mzaBtn">{{ item.buttonText }}</a>
+                            </footer>
+                        </div>
+                    </article>
+                {% else %}
+                    <p style="text-align: center; color: var(--color-text); opacity: 0.7;">No projects in this group.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if carousel_items|length > 0 %}
+            <div class="mzaCarousel-controls" aria-label="Controls">
+                <button class="mzaCarousel-prev" aria-label="Previous slide" type="button">‹</button>
+                <button class="mzaCarousel-next" aria-label="Next slide" type="button">›</button>
+            </div>
+
+            <div class="mzaCarousel-pagination" role="tablist" aria-label="Slide navigation"></div>
+            <div class="mzaCarousel-progress" aria-hidden="true"><span class="mzaCarousel-progressBar"></span></div>
+        {% endif %}
+    </div>
+</section>
