@@ -1,22 +1,21 @@
-name: Build and Deploy to Firebase Hosting # Изменено название для ясности
+name: Build and Deploy to Firebase Hosting
 
 on:
   push:
     branches:
       - main
-      - 'feature/**' # NEW: Запускать при пуше в ветки, начинающиеся с 'feature/'
-      - 'dev/**'     # NEW: Пример для веток разработки
-  pull_request: # NEW: Запускать при создании или обновлении Pull Request
+      - 'feature/**'
+      - 'dev/**'
+  pull_request:
     branches:
       - main
       - 'feature/**'
       - 'dev/**'
-  workflow_dispatch: # Позволяет запускать вручную
+  workflow_dispatch:
 
 permissions:
   contents: read
-  # pages: write # УДАЛЕНО: Это для GitHub Pages, а мы используем Firebase Hosting
-  id-token: write # Требуется для аутентификации Firebase
+  id-token: write
 
 jobs:
   build_and_deploy:
@@ -34,56 +33,52 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          npm install -g firebase-tools # NEW: Устанавливаем Firebase CLI
-      
+          npm install -g firebase-tools
+
       - name: Generate Site
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}
         run: python generate_site.py
 
-      # УДАЛЕНО: Шаги для GitHub Pages
-      # - name: Setup Pages
-      #   uses: actions/configure-pages@v5
-      # - name: Upload artifact
-      #   uses: actions/upload-pages-artifact@v3
-      #   with:
-      #     path: './public'
-          
-      - name: Determine Firebase Channel and Target # NEW: Определяем канал и цель деплоя
+      # --- NEW DEBUG STEP: List public directory contents ---
+      - name: List public directory contents
+        run: |
+          echo "Listing contents of ./public:"
+          ls -R ./public
+          echo "--- End of ./public listing ---"
+          # Optional: Fail the action if index.html is not found at the root of public
+          if [ ! -f ./public/index.html ]; then
+            echo "ERROR: ./public/index.html was not found. Site will likely return 404."
+            exit 1 # Fail the workflow if index.html is missing
+          fi
+      # --- END NEW DEBUG STEP ---
+
+      - name: Determine Firebase Channel and Target
         id: set_deploy_info
         run: |
-          # Получаем имя ветки
           BRANCH_NAME="${{ github.ref_name }}"
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             BRANCH_NAME="${{ github.head_ref }}"
           fi
 
-          # Санитизируем имя ветки для использования в качестве ID канала Firebase
-          # Firebase channel IDs могут содержать только строчные буквы, цифры и дефисы.
-          # Заменяем все, кроме разрешенных символов, на дефисы и приводим к нижнему регистру.
           SANITIZED_CHANNEL_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9-]/-/g' | tr '[:upper:]' '[:lower:]')
 
-          # Определяем, является ли это деплоем в основную ветку (live) или в канал предварительного просмотра
           if [[ "$BRANCH_NAME" == "main" ]]; then
             echo "Deploying to LIVE site."
-            echo "CHANNEL_ID=" >> $GITHUB_OUTPUT # Пустой CHANNEL_ID означает деплой в live
-            echo "EXPIRES=" >> $GITHUB_OUTPUT # Без срока действия для live
+            echo "CHANNEL_ID=" >> $GITHUB_OUTPUT
+            echo "EXPIRES=" >> $GITHUB_OUTPUT
           else
             echo "Deploying to PREVIEW channel: $SANITIZED_CHANNEL_NAME"
             echo "CHANNEL_ID=$SANITIZED_CHANNEL_NAME" >> $GITHUB_OUTPUT
-            echo "EXPIRES=7d" >> $GITHUB_OUTPUT # Канал предварительного просмотра истекает через 7 дней
+            echo "EXPIRES=7d" >> $GITHUB_OUTPUT
           fi
 
-      - name: Deploy to Firebase Hosting # NEW: Деплой на Firebase Hosting
+      - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}' # Токен GitHub для взаимодействия с репозиторием
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}' # Ваш секрет с JSON ключом сервисного аккаунта
-          projectId: 'razrabotka-b61bc' # ID вашего проекта Firebase
-          channelId: '${{ steps.set_deploy_info.outputs.CHANNEL_ID }}' # ID канала (пусто для main, имя ветки для других)
-          expires: '${{ steps.set_deploy_info.outputs.EXPIRES }}' # Срок действия канала
-          # target: 'your-hosting-site-id' # Опционально, если у вас несколько сайтов в одном проекте Firebase.
-                                          # Если у вас только один сайт, это не обязательно.
-                                          # Если нужно, замените 'your-hosting-site-id' на ID вашего сайта из Firebase Console -> Hosting.
-                                          # Например, 'digital-craft-tbilisi'
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_RAZRABOTKA }}'
+          projectId: 'razrabotka-b61bc'
+          channelId: '${{ steps.set_deploy_info.outputs.CHANNEL_ID }}'
+          expires: '${{ steps.set_deploy_info.outputs.EXPIRES }}'
         id: deployment
