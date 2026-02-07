@@ -1,0 +1,112 @@
+/* new-carousel.css */
+
+:root {
+    --glow-sens: 30;
+    --dark: #1a1a1a;
+    --card-bg: linear-gradient(8deg, var(--dark) 75%, color-mix(in hsl, var(--dark), white 2.5%) 75.5%);
+    --blend: soft-light;
+    --glow-blend: plus-lighter;
+    --glow-color: 40deg 80% 80%;
+    --glow-boost: 0%;
+    --fg: white;
+    --h: 220;
+}
+
+.card.light-theme {
+    --card-bg: linear-gradient(8deg, color-mix(in hsl, hsl(260, 25%, 95%), #1a1a1a 2.5%) 75%, hsl(260, 25%, 95%) 75.5%);
+    --blend: darken;
+    --glow-blend: luminosity;
+    --glow-color: 280deg 90% 95%;
+    --glow-boost: 15%;
+    --fg: black;
+    color: var(--fg);
+    border-color: rgb(0 0 0 / 15%);
+}
+
+.carousel-container {
+    width: 100%;
+    max-width: 1200px;
+    height: 500px;
+    position: relative;
+    perspective: 1000px;
+    margin-top: 80px;
+    padding: 0 20px;
+}
+
+.carousel-track {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transform-style: preserve-3d;
+}
+
+.card {
+    --pads: 40px;
+    --color-sens: calc(var(--glow-sens) + 20);
+    --pointer-°: 45deg;
+    --pointer-d: 0;
+    position: absolute;
+    width: clamp(320px, calc(100vw - calc(var(--pads) * 2)), 600px);
+    height: calc(100vh - calc(var(--pads) * 2));
+    max-height: 600px;
+    border-radius: 1.768em;
+    overflow: hidden;
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    cursor: pointer;
+    isolation: isolate;
+    transform: translate3d(0, 0, 0.01px);
+    display: grid;
+    border: 1px solid rgb(255 255 255 / 25%);
+    background: var(--card-bg);
+    background-repeat: no-repeat;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 2px, rgba(0, 0, 0, 0.1) 0px 2px 4px, rgba(0, 0, 0, 0.1) 0px 4px 8px, rgba(0, 0, 0, 0.1) 0px 8px 16px, rgba(0, 0, 0, 0.1) 0px 16px 32px, rgba(0, 0, 0, 0.1) 0px 32px 64px;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    transform: translate3d(0, 0, 0);
+}
+
+.card::before, .card::after, .card > .glow { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; }
+.card:not(.animating)::before, .card:not(.animating)::after, .card:not(.animating) > .glow { opacity: 0; }
+.card:hover::before, .card:hover::after, .card:hover > .glow { opacity: 1; }
+.card::before { border: 1px solid transparent; background: linear-gradient(var(--card-bg) 0 100%) padding-box, linear-gradient(rgb(255 255 255 / 0%) 0% 100%) border-box, radial-gradient(at 80% 55%, hsla(268,100%,76%,1) 0px, transparent 50%) border-box, radial-gradient(at 69% 34%, hsla(349,100%,74%,1) 0px, transparent 50%) border-box, radial-gradient(at 8% 6%, hsla(136,100%,78%,1) 0px, transparent 50%) border-box, radial-gradient(at 41% 38%, hsla(192,100%,64%,1) 0px, transparent 50%) border-box, radial-gradient(at 86% 85%, hsla(186,100%,74%,1) 0px, transparent 50%) border-box, radial-gradient(at 82% 18%, hsla(52,100%,65%,1) 0px, transparent 50%) border-box, radial-gradient(at 51% 4%, hsla(12,100%,72%,1) 0px, transparent 50%) border-box, linear-gradient(#c299ff 0 100%) border-box; opacity: calc((var(--pointer-d) - var(--color-sens)) / (100 - var(--color-sens))); mask-image: conic-gradient(from var(--pointer-°) at center, black 25%, transparent 40%, transparent 60%, black 75%); }
+.card::after { border: 1px solid transparent; background: radial-gradient(at 80% 55%, hsla(268,100%,76%,1) 0px, transparent 50%) padding-box, radial-gradient(at 69% 34%, hsla(349,100%,74%,1) 0px, transparent 50%) padding-box, radial-gradient(at 8% 6%, hsla(136,100%,78%,1) 0px, transparent 50%) padding-box, radial-gradient(at 41% 38%, hsla(192,100%,64%,1) 0px, transparent 50%) padding-box, radial-gradient(at 86% 85%, hsla(186,100%,74%,1) 0px, transparent 50%) padding-box, radial-gradient(at 82% 18%, hsla(52,100%,65%,1) 0px, transparent 50%) padding-box, radial-gradient(at 51% 4%, hsla(12,100%,72%,1) 0px, transparent 50%) padding-box, linear-gradient(#c299ff 0 100%) padding-box; mask-image: linear-gradient(to bottom, black, black), radial-gradient(ellipse at 50% 50%, black 40%, transparent 65%), radial-gradient(ellipse at 66% 66%, black 5%, transparent 40%), radial-gradient(ellipse at 33% 33%, black 5%, transparent 40%), radial-gradient(ellipse at 66% 33%, black 5%, transparent 40%), radial-gradient(ellipse at 33% 66%, black 5%, transparent 40%), conic-gradient(from var(--pointer-°) at center, transparent 5%, black 15%, black 85%, transparent 95%); mask-composite: subtract, add, add, add, add, add; opacity: calc((var(--pointer-d) - var(--color-sens)) / (100 - var(--color-sens))); mix-blend-mode: var(--blend); }
+.card > .glow { --outset: var(--pads); inset: calc(var(--outset) * -1); pointer-events: none; z-index: 1; mask-image: conic-gradient(from var(--pointer-°) at center, black 2.5%, transparent 10%, transparent 90%, black 97.5%); opacity: calc((var(--pointer-d) - var(--glow-sens)) / (100 - var(--glow-sens))); mix-blend-mode: var(--glow-blend); }
+.card > .glow::before { content: ""; position: absolute; inset: var(--outset); border-radius: inherit; box-shadow: inset 0 0 0 1px hsl(var(--glow-color) / 100%), inset 0 0 1px 0 hsl(var(--glow-color) / calc(var(--glow-boost) + 60%)), inset 0 0 3px 0 hsl(var(--glow-color) / calc(var(--glow-boost) + 50%)), inset 0 0 6px 0 hsl(var(--glow-color) / calc(var(--glow-boost) + 40%)), inset 0 0 15px 0 hsl(var(--glow-color) / calc(var(--glow-boost) + 30%)), inset 0 0 25px 2px hsl(var(--glow-color) / calc(var(--glow-boost) + 20%)), inset 0 0 50px 2px hsl(var(--glow-color) / calc(var(--glow-boost) + 10%)), 0 0 1px 0 hsl(var(--glow-color) / calc(var(--glow-boost) + 60%)), 0 0 3px 0 hsl(var(--glow-color) / calc(var(--glow-boost) + 50%)), 0 0 6px 0 hsl(var(--glow-color) / calc(var(--glow-boost) + 40%)), 0 0 15px 0 hsl(var(--glow-color) / calc(var(--glow-boost) + 30%)), 0 0 25px 2px hsl(var(--glow-color) / calc(var(--glow-boost) + 20%)), 0 0 50px 2px hsl(var(--glow-color) / calc(var(--glow-boost) + 10%)); }
+.card .inner { display: flex; flex-direction: column; justify-content: flex-start; position: relative; overflow: auto; z-index: 1; padding: 1.5em; }
+.card header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em; }
+.card h2 { font-family: 'Amaranth', sans-serif; color: inherit; font-weight: 700; font-size: 1.5em; margin: 0; flex: 1; text-align: center; }
+.card svg { height: 24px; width: 24px; cursor: pointer; transition: opacity 0.2s ease; }
+.sun { opacity: 0.25; } .sun:hover { opacity: 1; } .moon { opacity: 1; } .card.light-theme .sun { opacity: 1; } .card.light-theme .moon { opacity: 0.25; } .card.light-theme .moon:hover { opacity: 1; }
+.card .content { font-family: 'Asap Condensed', sans-serif; font-weight: 300; text-align: left; line-height: 1.6; color: color-mix(in srgb, var(--fg), transparent 40%); overflow: auto; scrollbar-width: none; }
+.card .content::-webkit-scrollbar { display: none; } .card .content p { margin-bottom: 1em; } .card .content em, .card .content strong { color: color-mix(in srgb, var(--fg), transparent 20%); font-weight: 600; }
+.card .role { font-family: 'Kode Mono', monospace; font-size: 0.85em; opacity: 0.7; margin-bottom: 0.5em; }
+.card.center { z-index: 10; transform: scale(1) translateZ(0); } .card.left-1 { z-index: 5; transform: translateX(-250px) scale(0.85) translateZ(-100px); opacity: 0.7; } .card.left-2 { z-index: 1; transform: translateX(-500px) scale(0.75) translateZ(-300px); opacity: 0.5; } .card.right-1 { z-index: 5; transform: translateX(250px) scale(0.85) translateZ(-100px); opacity: 0.7; } .card.right-2 { z-index: 1; transform: translateX(500px) scale(0.75) translateZ(-300px); opacity: 0.5; } .card.hidden { opacity: 0; pointer-events: none; }
+.nav-arrow { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(150, 180, 255, 0.6); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; transition: all 0.3s ease; font-size: 1.5rem; border: none; outline: none; padding-bottom: 4px; user-select: none; }
+.nav-arrow:hover { background: rgba(150, 180, 255, 0.9); } .nav-arrow.left { left: 20px; } .nav-arrow.right { right: 20px; }
+.dots { display: flex; justify-content: center; gap: 10px; margin-top: 60px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(150, 180, 255, 0.2); cursor: pointer; transition: all 0.3s ease; }
+.dot:hover { background: rgba(150, 180, 255, 0.6); transform: scale(1.2); } .dot.active { background: rgb(150, 180, 255); transform: scale(1.2); }
+@media (max-width: 768px) { .card { --pads: 20px; } .card.left-1 { transform: translateX(-150px) scale(0.85) translateZ(-100px); } .card.left-2 { transform: translateX(-300px) scale(0.75) translateZ(-300px); } .card.right-1 { transform: translateX(150px) scale(0.85) translateZ(-100px); } .card.right-2 { transform: translateX(300px) scale(0.75) translateZ(-300px); } }
+
+/* NEW STYLES FOR IMAGE AND LINK */
+.card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block; /* Important for layout */
+}
+.card-image {
+    display: block;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 1em;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+.card.light-theme .card-image {
+    border-color: rgba(0, 0, 0, 0.1);
+}

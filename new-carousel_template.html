@@ -1,0 +1,42 @@
+{# new-carousel_template.html #}
+
+<div class="carousel-container" id="{{ carousel_id }}">
+    <button class="nav-arrow left">‹</button>
+    <div class="carousel-track">
+        {% for item in carousel_items %}
+            {# Оборачиваем карточку в ссылку, если она есть #}
+            {% if item.linkUrl %}
+            <a href="{{ item.linkUrl }}" class="card-link">
+            {% endif %}
+
+            <div class="card">
+                <span class="glow"></span>
+                <div class="inner">
+                    <header>
+                        <svg class="sun" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg>
+                        <h2>{{ item.title }}</h2>
+                        <svg class="moon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+                    </header>
+                    
+                    {# Добавляем изображение, если оно есть #}
+                    {% if item.imageUrl %}
+                    <img src="{{ item.imageUrl }}" alt="{{ item.title }}" class="card-image">
+                    {% endif %}
+
+                    <div class="content">
+                        {% if item.role %}<p class="role">{{ item.role }}</p>{% endif %}
+                        {{ item.content | safe }}
+                    </div>
+                </div>
+            </div>
+
+            {% if item.linkUrl %}
+            </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <button class="nav-arrow right">›</button>
+    <div class="dots">
+        {# Точки будут сгенерированы динамически через JS #}
+    </div>
+</div>
