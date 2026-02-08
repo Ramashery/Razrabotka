@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="{{ home.lang or 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- 
+       УДАЛЕН СКРИПТ РЕДИРЕКТА, ВЫЗЫВАВШИЙ ЦИКЛИЧЕСКУЮ ПЕРЕЗАГРУЗКУ.
+       Firebase Hosting ("cleanUrls": true) справится с этим сам.
+    -->
+
+    <title>{{ home.seoTitle }}</title>
+    <meta name="description" content="{{ home.metaDescription }}">
+    <link rel="canonical" href="https://digital-craft-tbilisi.site/" />
+
+    <meta property="og:title" content="{{ home.ogTitle or home.seoTitle }}">
+    <meta property="og:description" content="{{ home.ogDescription or home.metaDescription }}">
+    <meta property="og:image" content="{{ home.ogImage or 'https://digital-craft-tbilisi.site/apple-touch-icon.png' }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://digital-craft-tbilisi.site/">
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.bunny.net/css?family=amaranth:400,400i,700,700i|asap-condensed:200,300i,400,400i,600,600i,700,700i,900,900i|kode-mono:400,500,600,700" rel="stylesheet" />
+    
+    <!-- STYLES -->
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/new-carousel.css">
+
+    {% if home.schemaJsonLd %}
+    <script type="application/ld+json">
+    {{ home.schemaJsonLd | tojson | safe }}
+    </script>
+    {% endif %}
+
+    <style>
+      :root { --main-visibility: visible !important; }
+      #ssr-carousel-source { display: none; }
+    </style>
+    
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+</head>
+<body data-static-page="true">
+    
+    <script id="preloaded-data" type="application/json">
+    {{ sections_data | tojson | safe }}
+    </script>
+    
+    <iframe id="custom-background-iframe" title="Custom Background" style="display:none;"></iframe>
+    
+    <button class="menu-toggle" aria-label="Toggle menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </button>
+    <div class="nav-overlay">
+        <ul class="nav-menu"></ul>
+    </div>
+
+    <!-- TOC Wrapper -->
+    <div id="floating-toc-wrapper" class="floating-toc-wrapper" style="display: none;">
+        <button id="toc-toggle-btn" class="toc-toggle-btn" aria-expanded="false" aria-controls="toc-content-panel">
+            Table of Contents <span class="toc-arrow"></span>
+        </button>
+        <div id="toc-content-panel" class="toc-content-panel" aria-hidden="true"></div>
+    </div>
+
+    <main>
+        <section id="hero" class="hero">
+            <h1 class="animate-always is-visible">{{ home.h1 }}</h1>
+            <div class="hero-subtitle-container animate-always">
+                {{ home.subtitle | safe }}
+            </div>
+        </section>
+
+        <!-- SERVICES SECTION -->
+        <section id="services">
+            <h2 class="animate-on-scroll">Our Services</h2>
+            <div class="item-grid">
+            {% for item in sections_data.services %}
+                {% if item.lang == (home.lang or 'en') %}
+                    {% set item_url = "/" + item.lang + "/services/" + item.urlSlug + "/" %}
+                    <a href="{{ item_url }}" class="item-card animate-on-scroll">
+                        <div class="item-card__image" style="background-image: url('{{ (item.media or ['']) | first }}')"></div>
+                        <div class="item-card__content">
+                            <h3>{{ item.title }}</h3>
+                            <div class="card-subtitle">{{ item.subtitle }}</div>
+                            <p>{{ item.description }}</p>
+                        </div>
+                    </a>
+                {% endif %}
+            {% endfor %}
+            </div>
+        </section>
+
+        <!-- PORTFOLIO SECTION -->
+        <section id="portfolio">
+            <h2 class="animate-on-scroll">Our Portfolio</h2>
+            <div class="item-grid">
+            {% for item in sections_data.portfolio %}
+                {% if item.lang == (home.lang or 'en') %}
+                    {% set item_url = "/" + item.lang + "/portfolio/" + item.urlSlug + "/" %}
+                    <a href="{{ item_url }}" class="item-card animate-on-scroll">
+                        <div class="item-card__image" style="background-image: url('{{ (item.media or ['']) | first }}')"></div>
+                        <div class="item-card__content">
+                            <h3>{{ item.title }}</h3>
+                            <div class="card-subtitle">{{ item.subtitle }}</div>
+                            <p>{{ item.description }}</p>
+                        </div>
+                    </a>
+                {% endif %}
+            {% endfor %}
+            </div>
+        </section>
+
+        <!-- BLOG SECTION -->
+        <section id="blog">
+            <h2 class="animate-on-scroll">Our Blog</h2>
+            <div class="item-grid">
+            {% for item in sections_data.blog %}
+                {% if item.lang == (home.lang or 'en') %}
+                    {% set item_url = "/" + item.lang + "/blog/" + item.urlSlug + "/" %}
+                    <a href="{{ item_url }}" class="item-card animate-on-scroll">
+                        <div class="item-card__image" style="background-image: url('{{ (item.media or ['']) | first }}')"></div>
+                        <div class="item-card__content">
+                            <h3>{{ item.title }}</h3>
+                            <div class="card-subtitle">{{ item.subtitle }}</div>
+                            <p>{{ item.description }}</p>
+                        </div>
+                    </a>
+                {% endif %}
+            {% endfor %}
+            </div>
+        </section>
+
+        <!-- CONTACT SECTION -->
+        <section id="contact">
+            <h2 class="animate-on-scroll">Our Contacts</h2>
+            <div class="item-grid">
+            {% for item in sections_data.contact %}
+                {% if item.lang == (home.lang or 'en') %}
+                    {% set item_url = "/" + item.lang + "/contact/" + item.urlSlug + "/" %}
+                    <a href="{{ item_url }}" class="item-card animate-on-scroll">
+                        <div class="item-card__image" style="background-image: url('{{ (item.media or ['']) | first }}')"></div>
+                        <div class="item-card__content">
+                            <h3>{{ item.title }}</h3>
+                            <div class="card-subtitle">{{ item.subtitle }}</div>
+                            <p>{{ item.description }}</p>
+                        </div>
+                    </a>
+                {% endif %}
+            {% endfor %}
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="site-footer" id="site-footer"></footer>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js" defer></script>
+    
+    <script type="module" src="/main.js"></script>
+    <script type="module" src="/new-carousel.js"></script>
+
+    <!-- Yandex Metrika -->
+    <script type="text/javascript">
+        function loadYandexMetrika() {
+            (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+            (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+    
+            ym(103413242, "init", {
+                 clickmap:true,
+                 trackLinks:true,
+                 accurateTrackBounce:true,
+                 webvisor:true
+            });
+        }
+        setTimeout(loadYandexMetrika, 4500);
+    </script>
+
+</body>
+</html>
