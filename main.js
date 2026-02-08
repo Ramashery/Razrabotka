@@ -1,0 +1,1011 @@
+// --- FIREBASE CONFIGURATION ---
+const firebaseConfig = {
+  apiKey: "AIzaSyAT4dDEIDUtzP60ibjahO06P75Q6h95ZN4",
+  authDomain: "razrabotka-b61bc.firebaseapp.com",
+  projectId: "razrabotka-b61bc",
+  storageBucket: "razrabotka-b61bc.firebasestorage.app",
+  messagingSenderId: "394402564794",
+  appId: "1:394402564794:web:f610ffb03e655c600c5083"
+};
+
+let db;
+let siteData = {};
+const initialSiteData = {
+    home: { h1: "", subtitle: "", lang: "en", seoTitle: "Digital Craft", metaDescription: "Professional websites for small businesses" },
+    services: [], portfolio: [], blog: [], contact: [], carouselItems: []
+};
+
+let ssrCarouselHtml = ''; 
+
+const mainContentEl = document.querySelector('main');
+let floatingObserver, animateOnceObserver, animateAlwaysObserver;
+
+// --- TRANSLITERATION MAPS ---
+const GEORGIAN_TRANSLIT_MAP = {
+    'ა': 'a', 'ბ': 'b', 'გ': 'g', 'დ': 'd', 'ე': 'e', 'ვ': 'v', 'ზ': 'z', 'თ': 't', 'ი': 'i',
+    'კ': 'k', 'ლ': 'l', 'მ': 'm', 'ნ': 'n', 'ო': 'o', 'პ': 'p', 'ჟ': 'zh', 'რ': 'r', 'ს': 's',
+    'ტ': 't', 'უ': 'u', 'ფ': 'p', 'ქ': 'k', 'ღ': 'gh', 'ყ': 'q', 'შ': 'sh', 'ჩ': 'ch', 'ც': 'ts',
+    'ძ': 'dz', 'წ': 'ts', 'ჭ': 'ch', 'ხ': 'kh', 'ჯ': 'j', 'ჰ': 'h',
+};
+
+const CYRILLIC_TRANSLIT_MAP = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh', 'з': 'z',
+    'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r',
+    'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
+    'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+    'ґ': 'g', 'є': 'ye', 'і': 'i', 'ї': 'yi',
+};
+
+function slugify(text) {
+    text = String(text).toLowerCase();
+    let hasGeorgian = false;
+    for (let i = 0; i < text.length; i++) {
+        const charCode = text.charCodeAt(i);
+        if (charCode >= 0x10D0 && charCode <= 0x10FF) { hasGeorgian = true; break; }
+    }
+    if (hasGeorgian) {
+        let transliterated = '';
+        for (let i = 0; i < text.length; i++) transliterated += GEORGIAN_TRANSLIT_MAP[text[i]] || text[i];
+        text = transliterated;
+    }
+    let hasCyrillic = false;
+    for (let i = 0; i < text.length; i++) {
+        const charCode = text.charCodeAt(i);
+        if (charCode >= 0x0400 && charCode <= 0x04FF) { hasCyrillic = true; break; }
+    }
+    if (hasCyrillic) {
+        let transliterated = '';
+        for (let i = 0; i < text.length; i++) transliterated += CYRILLIC_TRANSLIT_MAP[text[i]] || text[i];
+        text = transliterated;
+    }
+    text = text.replace(/[^a-z0-9-]+/g, '-');
+    text = text.replace(/--+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+    return text;
+}
+
+// --- INTERSECTION OBSERVER SETUP ---
+function setupObservers() {
+    // Disconnect existing observers to prevent re-observation
+    if (floatingObserver) floatingObserver.disconnect();
+    if (animateOnceObserver) animateOnceObserver.disconnect();
+    if (animateAlwaysObserver) animateAlwaysObserver.disconnect();
+
+    floatingObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const target = entry.target;
+            const isAboveViewport = entry.boundingClientRect.top < 0 && !entry.isIntersecting;
+            if (entry.isIntersecting) {
+                target.classList.add('is-visible');
+                target.classList.remove('is-above');
+            } else {
+                target.classList.remove('is-visible');
+                if (isAboveViewport) target.classList.add('is-above');
+                else target.classList.remove('is-above');
+            }
+        });
+    }, { threshold: 0, rootMargin: "-50px 0px -50px 0px" });
+
+    animateOnceObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target); // Stop observing once visible
+            }
+        });
+    }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+
+    animateAlwaysObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('is-visible');
+            else entry.target.classList.remove('is-visible');
+        });
+    }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+    
+    // Apply observers to elements
+    document.querySelectorAll('.floating-item').forEach(el => floatingObserver.observe(el));
+    document.querySelectorAll('.animate-on-scroll').forEach(el => animateOnceObserver.observe(el));
+    document.querySelectorAll('.animate-always').forEach(el => animateAlwaysObserver.observe(el));
+}
+
+// --- SEO TAG RENDERING ---
+function renderSeoTags(data) {
+    // Remove existing SEO related tags to avoid duplicates on SPA navigation
+    document.querySelectorAll('meta[name="description"], meta[property^="og:"], script[type="application/ld+json"], link[rel="canonical"]').forEach(el => el.remove());
+    
+    document.title = data.seoTitle || "Digital Craft";
+    document.documentElement.lang = data.lang || 'en';
+
+    const createMeta = (attr, key, value) => {
+        if (value) {
+            const meta = document.createElement('meta');
+            meta.setAttribute(attr, key);
+            meta.content = value;
+            document.head.appendChild(meta);
+        }
+    };
+
+    createMeta('name', 'description', data.metaDescription);
+    createMeta('property', 'og:title', data.ogTitle || data.seoTitle);
+    createMeta('property', 'og:description', data.ogDescription || data.metaDescription);
+    
+    const mediaArray = data.media || [];
+    const ogImage = data.ogImage || (mediaArray.find && mediaArray.find(url => !/youtube|vimeo/.test(url))) || '';
+    if (ogImage) createMeta('property', 'og:image', ogImage);
+
+    // Canonical link
+    const canonical = document.createElement('link');
+    canonical.rel = 'canonical';
+    const canonicalBaseUrl = 'https://digital-craft-tbilisi.site';
+    let path = window.location.pathname;
+    if (path.length > 1 && !path.endsWith('/')) path += '/'; // Ensure trailing slash for consistency
+    canonical.href = canonicalBaseUrl + path;
+    document.head.appendChild(canonical);
+
+    // JSON-LD Schema
+    let schemaData = data.schemaJsonLd;
+    if (typeof schemaData === 'string' && schemaData.trim()) {
+        try { schemaData = JSON.parse(schemaData); } catch (e) { schemaData = null; }
+    }
+    if (schemaData && typeof schemaData === 'object' && Object.keys(schemaData).length > 0) {
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.textContent = JSON.stringify(schemaData);
+        document.head.appendChild(script);
+    }
+}
+
+// --- DATA LOADING FROM FIREBASE ---
+async function loadData() {
+    const freshSiteData = {};
+    try {
+        const collections = ['services', 'portfolio', 'blog', 'contact', 'carouselItems'];
+        const dataPromises = [
+            db.collection('home').doc('content').get(), // Fetch home page content
+            ...collections.map(col => { // Fetch other collections
+                if (col === 'carouselItems') return db.collection(col).orderBy('order').get();
+                return db.collection(col).get();
+            })
+        ];
+        const [homeDoc, ...snapshots] = await Promise.all(dataPromises);
+
+        const processDocData = (data) => {
+            if (data && typeof data.schemaJsonLd === 'string' && data.schemaJsonLd.trim().startsWith('{')) {
+                try { data.schemaJsonLd = JSON.parse(data.schemaJsonLd); } catch (e) { data.schemaJsonLd = {}; }
+            }
+            return data;
+        };
+
+        freshSiteData.home = homeDoc.exists ? processDocData(homeDoc.data()) : {};
+        collections.forEach((col, index) => {
+            freshSiteData[col] = snapshots[index].docs
+                .map(doc => ({ id: doc.id, ...processDocData(doc.data()) }))
+                .filter(item => item.status !== 'archived'); // Filter out archived items
+        });
+        console.log("Firebase data loaded successfully.", freshSiteData);
+        return freshSiteData;
+    } catch (error) {
+        console.error("Error loading data from Firebase:", error);
+        // Fallback to initial static data if Firebase fails
+        return JSON.parse(JSON.stringify(initialSiteData));
+    }
+}
+
+// --- CONTENT FORMATTING (CLIENT-SIDE) ---
+function formatContentHtml(content, siteData = null, lang = 'en') {
+    if (!content) return '';
+
+    // Escape content inside <pre> tags to prevent HTML injection/parsing issues
+    let processedContent = content.replace(/<pre(.*?)>([\s\S]*?)<\/pre>/gim, function(match, attrs, inner) {
+        const codeMatch = inner.match(/^\s*<code(.*?)>([\s\S]*?)<\/code>\s*$/i);
+        if (codeMatch) {
+            const codeAttrs = codeMatch[1];
+            const codeContent = codeMatch[2];
+            const escapedContent = codeContent.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `<pre${attrs}><code${codeAttrs}>${escapedContent}</code></pre>`;
+        } else {
+            const escapedInner = inner.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `<pre${attrs}>${escapedInner}</pre>`;
+        }
+    });
+
+    processedContent = processedContent.replace(/\r\n/g, '\n'); // Normalize line endings
+    const blocks = processedContent.split(/\n{2,}/); // Split content by double newlines into blocks
+    
+    const html_parts = blocks.map(block => {
+        const trimmedBlock = block.trim();
+        if (!trimmedBlock) return '';
+        
+        const carouselMatch = trimmedBlock.match(/^\[CAROUSEL:([\w-]+)\]$/);
+        const youtubeRegex = /^https?:\/\/(?:www\.|m\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch?v=|watch\?.*&v=|shorts\/))([a-zA-Z0-9_-]{11}).*$/;
+        const imageRegex = /^https?:\/\/[^<>"']+\.(?:jpg|jpeg|png|gif|webp|svg)\s*$/i;
+        const youtubeMatch = trimmedBlock.match(youtubeRegex);
+        const imageMatch = trimmedBlock.match(imageRegex);
+        
+        if (carouselMatch && siteData) {
+            const groupKey = carouselMatch[1];
+            const carouselItems = (siteData.carouselItems || []).filter(
+                item => item.groupKey === groupKey && item.lang === lang
+            );
+
+            if (carouselItems.length === 0) {
+                console.warn(`[formatContentHtml] No carousel items found for groupKey: "${groupKey}" and lang: "${lang}". Returning empty string.`);
+                return '';
+            }
+
+            const carouselId = `glowCarousel-${groupKey}-${Math.floor(Math.random() * 9000) + 1000}`;
+            
+            // --- NEW CAROUSEL DESIGN (as item-card) ---
+            const slidesHtml = carouselItems.map(item => {
+                const isLink = item.linkUrl && item.linkUrl !== '#';
+                const tag = isLink ? 'a' : 'div';
+                const hrefAttr = isLink ? `href="${item.linkUrl}" target="_blank" rel="noopener noreferrer"` : '';
+                
+                return `
+                <${tag} ${hrefAttr} class="card">
+                    <div class="card-image-bg" style="background-image: url('${item.imageUrl || ''}');"></div>
+                    <div class="card-inner-content">
+                        <h4>${item.title || ''}</h4>
+                        ${item.role ? `<div class="card-subtitle">${item.role}</div>` : ''}
+                        <div class="card-desc">
+                            ${item.content || ''}
+                        </div>
+                    </div>
+                </${tag}>
+            `;
+            }).join('');
+
+            return `
+            <div class="carousel-container" id="${carouselId}">
+                <button class="nav-arrow left">‹</button>
+                <div class="carousel-track">${slidesHtml}</div>
+                <button class="nav-arrow right">›</button>
+                <div class="dots"></div>
+            </div>
+            `;
+            
+        } else if (/^<(p|div|h[1-6]|ul|ol|li|blockquote|hr|table|pre)/i.test(trimmedBlock)) {
+            // If block starts with a known HTML tag, treat as raw HTML
+            return trimmedBlock;
+        } else if (youtubeMatch && youtubeMatch[1]) {
+            // Embed YouTube video
+            return `<div class="embedded-video" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; margin: 1.5em 0; border-radius: 4px; border: 1px solid var(--color-border);"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="https://www.youtube.com/embed/${youtubeMatch[1]}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+        } else if (imageMatch) {
+            // Embed image
+            return `<p style="margin: 1.5em 0;"><img src="${trimmedBlock}" alt="Embedded content" style="max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 4px; border: 1px solid var(--color-border);" /></p>`;
+        } else {
+            // Default to paragraph with line breaks
+            return `<p>${trimmedBlock.replace(/\n/g, '<br>')}</p>`;
+        }
+    }).filter(Boolean); // Remove empty strings
+
+    // Group content into divs
+    const groupedHtml = [];
+    const GROUP_SIZE = 3;
+    let temp_group = [];
+    
+    html_parts.forEach(part => {
+        if (part.includes('carousel-container')) { // If it's a carousel, close current group and add carousel
+            if (temp_group.length > 0) {
+                groupedHtml.push(`<div class="content-group">${temp_group.join('')}</div>`);
+                temp_group = [];
+            }
+            groupedHtml.push(part);
+        } else { // Otherwise, add to current group
+            temp_group.push(part);
+            if (temp_group.length >= GROUP_SIZE) { // If group is full, close and start new one
+                groupedHtml.push(`<div class="content-group">${temp_group.join('')}</div>`);
+                temp_group = [];
+            }
+        }
+    });
+    if (temp_group.length > 0) groupedHtml.push(`<div class="content-group">${temp_group.join('')}</div>`); // Add any remaining parts
+    
+    return groupedHtml.join('\n');
+}
+
+// --- HOMEPAGE SECTION RENDERING ---
+const langNames = { en: 'English', ka: 'Georgian', ru: 'Russian', uk: 'Ukrainian' };
+
+function renderSection(key, title, items) {
+    const section = document.getElementById(key);
+    if (!section) {
+        console.warn(`[renderSection] Section #${key} not found.`);
+        return;
+    }
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    const itemsFromDb = items || siteData[key] || [];
+    const langOrder = ['en', 'ka', 'ru', 'uk']; // Consistent language order
+
+    const itemsByLang = {};
+    itemsFromDb.forEach(item => {
+        const lang = item.lang || 'en';
+        if (!itemsByLang[lang]) itemsByLang[lang] = [];
+        itemsByLang[lang].push(item);
+    });
+
+    let finalHtml;
+    if (isMobile) {
+        const mobileSlidersHTML = langOrder.map(lang => {
+            const langItems = itemsByLang[lang];
+            if (!langItems || langItems.length === 0) return '';
+            const slidesHTML = langItems.map((item, index) => {
+                const langPrefix = item.lang ? `/${item.lang}` : '';
+                let itemUrl = `${langPrefix}/${key}/${item.urlSlug}/`;
+                const mediaArray = item.media || [];
+                const imageUrl = (mediaArray.find && mediaArray.find(url => !/youtube|vimeo/.test(url))) || '';
+                return `<a href="${itemUrl}" class="item-card ${index === 0 ? 'active' : ''}"><div class="item-card__image" style="background-image: url('${imageUrl}')"></div><div class="item-card__content"><h3>${item.title}</h3><div class="card-subtitle">${item.subtitle}</div><p>${item.description}</p></div></a>`
+            }).join('');
+            const dotsHTML = langItems.length > 1 ? langItems.map((_, index) => `<span class="slider-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></span>`).join('') : '';
+            return `<div class="language-slider-block"><div class="cross-fade-slider">${slidesHTML}</div><div class="slider-nav">${dotsHTML}</div></div>`;
+        }).join('');
+        finalHtml = `<div class="mobile-sliders-container">${mobileSlidersHTML}</div>`;
+    } else {
+        const desktopGridsHTML = langOrder.map(lang => {
+            const langItems = itemsByLang[lang];
+            if (!langItems || langItems.length === 0) return '';
+            
+            // Group items into slides, 3 items per slide
+            const slides = [];
+            for (let i = 0; i < langItems.length; i += 3) slides.push(langItems.slice(i, i + 3));
+
+            const slidesHTML = slides.map((slideItems, index) => {
+                const cardsHTML = slideItems.map(item => {
+                    const langPrefix = item.lang ? `/${item.lang}` : '';
+                    let itemUrl = `${langPrefix}/${key}/${item.urlSlug}/`;
+                    const mediaArray = item.media || [];
+                    const imageUrl = (mediaArray.find && mediaArray.find(url => !/youtube|vimeo/.test(url))) || '';
+                    return `<a href="${itemUrl}" class="item-card"><div class="item-card__image" style="background-image: url('${imageUrl}')"></div><div class="item-card__content"><h3>${item.title}</h3><div class="card-subtitle">${item.subtitle}</div><p>${item.description}</p></div></a>`;
+                }).join('');
+                return `<div class="desktop-grid-slide ${index === 0 ? 'active' : ''}">${cardsHTML}</div>`;
+            }).join('');
+            
+            // Only show dots if there's more than one slide
+            const dotsHTML = slides.length > 1 ? slides.map((_, index) => `<span class="desktop-slider-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></span>`).join('') : '';
+            
+            return `<div class="desktop-language-group"><h4 class="desktop-lang-title">${langNames[lang]}</h4><div class="desktop-carousel-container">${slidesHTML}</div>${slides.length > 1 ? `<div class="desktop-slider-nav">${dotsHTML}</div>` : ''}</div>`;
+        }).join('');
+        finalHtml = `<div class="desktop-grid-wrapper">${desktopGridsHTML}</div>`;
+    }
+    // Replace the entire section's content
+    section.innerHTML = `<h2 class="animate-on-scroll is-visible">${title}</h2>${finalHtml}`;
+}
+
+// --- FLOATING TOC TOGGLE LOGIC ---
+let floatingTocToggleInitialized = false;
+function initFloatingTocToggle() {
+    if (floatingTocToggleInitialized) return; 
+
+    const floatingTocWrapper = document.getElementById('floating-toc-wrapper');
+    const toggleBtn = document.getElementById('toc-toggle-btn');
+    const contentPanel = document.getElementById('toc-content-panel');
+
+    if (!floatingTocWrapper || !toggleBtn || !contentPanel) return;
+
+    // Helper to close TOC
+    const closeToc = () => {
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        contentPanel.setAttribute('aria-hidden', 'true');
+        contentPanel.classList.remove('is-visible');
+        toggleBtn.classList.remove('is-active');
+    };
+
+    // Toggle on button click
+    toggleBtn.addEventListener('click', (event) => {
+        event.stopPropagation(); 
+        const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+        if (isExpanded) {
+            closeToc();
+        } else {
+            toggleBtn.setAttribute('aria-expanded', 'true');
+            contentPanel.setAttribute('aria-hidden', 'false');
+            contentPanel.classList.add('is-visible');
+            toggleBtn.classList.add('is-active');
+        }
+    });
+
+    // Close on click outside TOC
+    document.addEventListener('click', (event) => {
+        if (contentPanel.classList.contains('is-visible') && !floatingTocWrapper.contains(event.target)) {
+            closeToc();
+        }
+    });
+
+    // Close on click on an anchor link inside TOC (FIX FOR TOC NOT CLOSING)
+    contentPanel.addEventListener('click', (event) => {
+        if (event.target.closest('a')) {
+            // Small delay to allow browser to jump to anchor before closing
+            setTimeout(closeToc, 100); 
+        }
+    });
+
+    floatingTocToggleInitialized = true;
+}
+
+// --- GLOW CAROUSEL INITIALIZATION (FOR DETAIL PAGES) ---
+let glowCarouselInstances = [];
+function initializeCarousel() {
+    // Destroy existing instances to prevent re-initialization issues
+    glowCarouselInstances.forEach(instance => instance.destroy());
+    glowCarouselInstances = []; 
+
+    const carouselRoots = document.querySelectorAll('.carousel-container');
+    if (carouselRoots.length > 0) {
+        carouselRoots.forEach(root => {
+            if (root.id && typeof window.initGlowCarousel === 'function') {
+                console.log(`[initializeCarousel] Initializing glow carousel with ID: ${root.id}`);
+                const instance = window.initGlowCarousel(root.id);
+                if (instance) glowCarouselInstances.push(instance);
+            } else {
+                console.warn(`[initializeCarousel] Skipping carousel for root ID: ${root.id}. Either ID is missing or window.initGlowCarousel is not a function.`);
+            }
+        });
+        console.log(`[initializeCarousel] Total ${glowCarouselInstances.length} glow carousel instances initialized.`);
+    } else {
+        console.log("[initializeCarousel] No glow carousel roots found.");
+    }
+}
+
+// --- DETAIL PAGE RENDERING ---
+function renderDetailPage(collection, slug, lang) {
+    console.log(`[renderDetailPage] Rendering detail page for: ${collection}/${slug} in ${lang}`);
+    const item = siteData[collection]?.find(d => d.urlSlug === slug && d.lang === lang);
+    const floatingTocWrapper = document.getElementById('floating-toc-wrapper');
+    const tocContentPanel = document.getElementById('toc-content-panel');
+    const tocToggleBtn = document.getElementById('toc-toggle-btn');
+
+    if (!item) {
+        console.error(`[renderDetailPage] Item not found for ${collection}/${slug} in ${lang}. Displaying 404.`);
+        mainContentEl.innerHTML = `<section class="detail-page-header"><h1>404 - Not Found</h1><p>The page you were looking for does not exist.</p><a href="/">Go back home</a></section>`;
+        if (floatingTocWrapper) floatingTocWrapper.style.display = 'none';
+        initializeCarousel(); // Still try to init any potential carousels in 404
+        return;
+    }
+    renderSeoTags(item);
+    applyCustomBackground(item);
+
+    const rawContent = item.mainContent || '';
+    let tocHtmlContent = ''; 
+    let finalContentHtml = '';
+
+    const tocTitles = { 'en': 'Table of Contents', 'ru': 'Содержание', 'ka': 'სარჩევი', 'uk': 'Зміст' };
+    const tocTitle = tocTitles[lang] || 'Table of Contents';
+
+    if (rawContent.trim().startsWith('[TOC]')) {
+        console.log("[renderDetailPage] TOC marker found. Generating Table of Contents.");
+        const contentWithoutTocMarker = rawContent.replace('[TOC]', '', 1).trim();
+        const contentHtml = formatContentHtml(contentWithoutTocMarker, siteData, lang);
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(contentHtml, 'text/html');
+        const tocItems = [];
+        
+        // TOC looks for h2 and h3
+        doc.querySelectorAll('h2, h3').forEach(header => {
+            const headerText = header.innerText.trim();
+            if (headerText) {
+                const headerSlug = slugify(headerText);
+                header.id = headerSlug; // Assign ID for anchor links
+                tocItems.push({ level: header.tagName.toLowerCase(), text: headerText, slug: headerSlug });
+            }
+        });
+        
+        if (tocItems.length > 0) {
+            let tocListHtml = '<ul>';
+            tocItems.forEach(tocItem => {
+                const className = tocItem.level === 'h3' ? 'toc-level-h3' : '';
+                tocListHtml += `<li class="${className}"><a href="#${tocItem.slug}">${tocItem.text}</a></li>`;
+            });
+            tocListHtml += '</ul>';
+            tocHtmlContent = tocListHtml;
+        } else {
+            console.log("[renderDetailPage] No H2/H3 headers found for TOC.");
+        }
+        finalContentHtml = doc.body.innerHTML; // Get HTML with updated IDs
+    } else {
+        console.log("[renderDetailPage] No TOC marker found. Formatting content without TOC generation.");
+        finalContentHtml = formatContentHtml(rawContent, siteData, lang);
+    }
+
+    mainContentEl.innerHTML = `
+        <section>
+            <div class="detail-page-header">
+                <h1 class="animate-always is-visible">${item.h1 || item.title || ''}</h1>
+                ${item.price ? `<div class="detail-price animate-on-scroll"><span>${item.price}</span></div>` : ''} 
+            </div>
+            <div class="detail-content">${finalContentHtml}</div>
+        </section>
+        <button id="scroll-to-top-btn" title="Наверх">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                <path fill="none" d="M0 0h24v24H0z"/>
+                <path d="M13 7.828V20h-2V7.828l-5.364 5.364-1.414-1.414L12 4l7.778 7.778-1.414 1.414L13 7.828z"/>
+            </svg>
+        </button>
+    `;
+
+    // Add floating-item class to content groups for animation
+    document.querySelectorAll('.detail-content > .content-group').forEach(el => el.classList.add('floating-item'));
+
+    if (floatingTocWrapper && tocContentPanel && tocToggleBtn) {
+        if (tocHtmlContent) {
+            tocToggleBtn.innerHTML = `${tocTitle} <span class="toc-arrow"></span>`;
+            tocContentPanel.innerHTML = tocHtmlContent; 
+            floatingTocWrapper.style.display = 'flex'; 
+            // Ensure TOC is closed by default after render
+            tocToggleBtn.setAttribute('aria-expanded', 'false');
+            tocContentPanel.setAttribute('aria-hidden', 'true');
+            tocContentPanel.classList.remove('is-visible');
+            tocToggleBtn.classList.remove('is-active');
+            initFloatingTocToggle(); // Re-initialize TOC events
+        } else {
+            floatingTocWrapper.style.display = 'none'; 
+            tocContentPanel.innerHTML = ''; // Clear TOC content
+        }
+    }
+
+    renderRelatedPosts(collection, slug, lang); 
+
+    // Append SSR carousel content if it exists (though it should be empty for detail pages)
+    if (ssrCarouselHtml) {
+        console.warn("[renderDetailPage] ssrCarouselHtml found on detail page. This should ideally be empty.");
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = ssrCarouselHtml;
+        while (tempDiv.firstChild) mainContentEl.appendChild(tempDiv.firstChild);
+    }
+
+    initializeCarousel(); // Initialize any glow carousels
+    document.getElementById('site-footer').style.display = 'none'; // Hide footer on detail pages if needed
+}
+
+// --- RELATED POSTS RENDERING ---
+function renderRelatedPosts(currentCollection, currentSlug, currentLang) {
+    if (!siteData.services || !siteData.blog) {
+        console.log("[renderRelatedPosts] No services or blog data to render related posts.");
+        return;
+    }
+    // Combine services and blog for related items
+    const pool = [
+        ...siteData.services.map(i => ({...i, collection: 'services'})),
+        ...siteData.blog.map(i => ({...i, collection: 'blog'}))
+    ];
+    // Filter out current item and select random 6
+    const relatedItems = pool.filter(item => item.lang === currentLang && !(item.collection === currentCollection && item.urlSlug === currentSlug))
+                             .sort(() => 0.5 - Math.random())
+                             .slice(0, 6);
+
+    if (relatedItems.length === 0) {
+        console.log("[renderRelatedPosts] No related posts found.");
+        return;
+    }
+
+    const itemsHTML = relatedItems.map(item => {
+        const langPrefix = item.lang ? `/${item.lang}` : '';
+        let itemUrl = `${langPrefix}/${item.collection}/${item.urlSlug}/`;
+        const mediaArray = item.media || [];
+        const imageUrl = (mediaArray.find && mediaArray.find(url => !/youtube|vimeo/.test(url))) || '';
+        return `<a href="${itemUrl}" class="item-card animate-on-scroll"><div class="item-card__image" style="background-image: url('${imageUrl}')"></div><div class="item-card__content"><h3>${item.title}</h3><div class="card-subtitle">${item.subtitle}</div><p>${item.description}</p></div></a>`
+    }).join('');
+
+    const relatedSection = document.createElement('section');
+    relatedSection.id = 'related-posts';
+    relatedSection.innerHTML = `<h2 class="animate-on-scroll">You Might Also Like</h2><div class="item-grid">${itemsHTML}</div>`;
+    mainContentEl.appendChild(relatedSection);
+}
+
+// --- NAVIGATION MENU RENDERING ---
+function renderMenu() { 
+    const menuEl = document.querySelector('.nav-menu'); 
+    if (!menuEl) return; 
+    const menuItems = [
+        { label: 'Home', href: '/' }, 
+        { label: 'Services', href: '/#services' }, 
+        { label: 'Portfolio', href: '/#portfolio' }, 
+        { label: 'Blog', href: '/#blog' }, 
+        { label: 'Contact', href: '/#contact' }
+    ]; 
+    menuEl.innerHTML = menuItems.map(item => `<li><a href="${item.href}">${item.label}</a></li>`).join(''); 
+}
+
+// --- CUSTOM BACKGROUND LOGIC ---
+function applyCustomBackground(item) {
+    const iframe = document.getElementById('custom-background-iframe');
+    if (!iframe) return;
+    const homeBgHtml = (siteData.home && siteData.home.backgroundHtml) || '';
+    const itemBgHtml = (item && item.backgroundHtml) || '';
+    const customCode = itemBgHtml || homeBgHtml || '';
+    if (customCode && customCode.trim() !== "") {
+        if (iframe.srcdoc === customCode && iframe.style.display === 'block') return; // Avoid re-rendering same content
+        iframe.classList.remove('is-visible');
+        iframe.onload = () => {
+            iframe.classList.add('is-visible');
+            iframe.onload = null; // Remove handler after first load
+        };
+        iframe.style.display = 'block';
+        iframe.srcdoc = customCode;
+    } else {
+        iframe.classList.remove('is-visible');
+        iframe.style.display = 'none'; // Hide if no custom background
+        iframe.srcdoc = ''; // Clear content
+    }
+}
+
+// --- HOMEPAGE DESKTOP CAROUSEL INITIALIZATION ---
+function initDesktopCarousels() {
+    console.log("[initDesktopCarousels] Starting initialization for desktop carousels.");
+    document.querySelectorAll('.desktop-carousel-container').forEach(carousel => {
+        const slides = carousel.querySelectorAll('.desktop-grid-slide');
+        const nav = carousel.nextElementSibling; // Assumes nav is immediately after carousel container
+        const languageGroupTitle = carousel.closest('.desktop-language-group')?.querySelector('h4')?.textContent || 'Unknown Language';
+        
+        if (!nav || !nav.matches('.desktop-slider-nav')) {
+            console.warn(`[initDesktopCarousels] No valid navigation found for ${languageGroupTitle} carousel. Skipping.`);
+            return;
+        }
+        
+        const dots = nav.querySelectorAll('.desktop-slider-dot');
+        if (slides.length <= 1) {
+            console.log(`[initDesktopCarousels] ${languageGroupTitle} carousel has 1 or less slides. Skipping auto-sliding logic.`);
+            return;
+        }
+
+        let currentIndex = 0;
+        let autoSlideInterval;
+
+        function goToSlide(index) {
+            currentIndex = (index + slides.length) % slides.length;
+            slides.forEach((s, i) => s.classList.toggle('active', i === currentIndex));
+            dots.forEach((d, i) => d.classList.toggle('active', i === currentIndex));
+            console.log(`[initDesktopCarousels] ${languageGroupTitle} - Going to slide: ${currentIndex}`);
+        }
+
+        function startAutoSlide() {
+            stopAutoSlide(); 
+            autoSlideInterval = setInterval(() => goToSlide(currentIndex + 1), 7000); // 7 seconds
+            console.log(`[initDesktopCarousels] ${languageGroupTitle} - Auto-slide started.`);
+        }
+
+        function stopAutoSlide() {
+            clearInterval(autoSlideInterval);
+            console.log(`[initDesktopCarousels] ${languageGroupTitle} - Auto-slide stopped.`);
+        }
+
+        goToSlide(0); // Initialize to the first slide
+        startAutoSlide(); // Start auto-sliding
+
+        nav.addEventListener('click', e => {
+            if (e.target.matches('.desktop-slider-dot')) {
+                stopAutoSlide();
+                goToSlide(parseInt(e.target.dataset.index));
+                startAutoSlide(); 
+            }
+        });
+        console.log(`[initDesktopCarousels] ${languageGroupTitle} carousel initialized with ${slides.length} slides.`);
+    });
+}
+
+// --- HOMEPAGE MOBILE SLIDER INITIALIZATION ---
+function initMobileSliders() {
+    console.log("[initMobileSliders] Starting initialization for mobile sliders.");
+    document.querySelectorAll('.language-slider-block').forEach(sliderBlock => {
+        const slider = sliderBlock.querySelector('.cross-fade-slider');
+        const slides = slider.querySelectorAll('.item-card');
+        const nav = sliderBlock.querySelector('.slider-nav');
+        const dots = nav.querySelectorAll('.slider-dot');
+        
+        // Determine language for logging
+        const languageName = sliderBlock.closest('section')?.querySelector('h2')?.textContent || 'Unknown Section';
+        
+        if (slides.length <= 1) {
+            console.log(`[initMobileSliders] ${languageName} mobile slider has 1 or less slides. Skipping auto-sliding logic.`);
+            return;
+        }
+
+        let currentIndex = 0;
+        let touchStartX = 0;
+        let touchStartY = 0; // To differentiate horizontal/vertical swipe
+        let autoSlideInterval;
+
+        function goToSlide(index) {
+            currentIndex = (index + slides.length) % slides.length;
+            slides.forEach((s, i) => s.classList.toggle('active', i === currentIndex));
+            dots.forEach((d, i) => d.classList.toggle('active', i === currentIndex));
+            console.log(`[initMobileSliders] ${languageName} - Going to slide: ${currentIndex}`);
+        }
+
+        function startAutoSlide() {
+            stopAutoSlide(); 
+            autoSlideInterval = setInterval(() => goToSlide(currentIndex + 1), 5000); // 5 seconds
+            console.log(`[initMobileSliders] ${languageName} - Auto-slide started.`);
+        }
+
+        function stopAutoSlide() {
+            clearInterval(autoSlideInterval);
+            console.log(`[initMobileSliders] ${languageName} - Auto-slide stopped.`);
+        }
+
+        goToSlide(0); // Initialize to the first slide
+        startAutoSlide(); // Start auto-sliding
+
+        nav.addEventListener('click', e => {
+            if (e.target.matches('.slider-dot')) {
+                stopAutoSlide();
+                goToSlide(parseInt(e.target.dataset.index));
+                startAutoSlide(); 
+            }
+        });
+
+        // Touch swipe handling
+        slider.addEventListener('touchstart', e => { 
+            touchStartX = e.changedTouches[0].screenX; 
+            touchStartY = e.changedTouches[0].screenY;
+            stopAutoSlide(); 
+        }, { passive: true });
+
+        slider.addEventListener('touchend', e => { 
+            const touchEndX = e.changedTouches[0].screenX; 
+            const touchEndY = e.changedTouches[0].screenY;
+            const diffX = touchStartX - touchEndX;
+            const diffY = Math.abs(touchStartY - touchEndY); // Absolute vertical difference
+
+            const swipeThreshold = 50; // Minimum horizontal swipe distance
+            
+            // Only consider swipe if horizontal movement is significantly more than vertical
+            if (Math.abs(diffX) > swipeThreshold && Math.abs(diffX) > diffY) {
+                if (diffX > 0) goToSlide(currentIndex + 1); // Swipe left
+                else goToSlide(currentIndex - 1); // Swipe right
+            }
+            startAutoSlide(); 
+        }, { passive: true });
+        console.log(`[initMobileSliders] ${languageName} mobile slider initialized with ${slides.length} slides.`);
+    });
+}
+
+// --- SCROLL TO ELEMENT WITH OFFSET ---
+function scrollToElementWithOffset(elementId, offset = 120) {
+    const element = document.getElementById(elementId);
+    if (!element) {
+        console.warn(`[scrollToElementWithOffset] Element with ID '${elementId}' not found.`);
+        return;
+    }
+    const elementTop = element.getBoundingClientRect().top + window.pageYOffset;
+    const targetPosition = elementTop - offset;
+    window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+}
+
+// --- NAVIGATION LOGIC ---
+async function navigateToHome(hash = '') {
+    console.log(`[navigateToHome] Navigating to homepage with hash: ${hash}`);
+    try {
+        // Fetch home page HTML (from /index.html)
+        const response = await fetch('/'); 
+        if (!response.ok) throw new Error('Failed to fetch home page');
+        const htmlText = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+        const newMain = doc.querySelector('main');
+        if (newMain) {
+            mainContentEl.innerHTML = newMain.innerHTML;
+            mainContentEl.classList.remove('loading');
+            document.title = doc.querySelector('title')?.textContent || 'Digital Craft';
+            document.documentElement.lang = doc.documentElement.lang || 'en'; // Update root lang
+        }
+        applyCustomBackground(siteData.home);
+        hydrateHomePageContent(); // Re-render dynamic sections of homepage
+        initializeCarousel(); // Re-initialize all carousels (glow, desktop, mobile)
+        requestAnimationFrame(() => {
+            const h1 = document.querySelector('.hero h1');
+            const sub = document.querySelector('.hero-subtitle-container');
+            if (h1) h1.classList.add('is-visible'); 
+            if (sub) sub.classList.add('is-visible'); 
+        });
+        if (hash) setTimeout(() => { scrollToElementWithOffset(hash.substring(1), 120); }, 100);
+    } catch (error) {
+        console.error("[navigateToHome] Navigation error:", error);
+    } finally {
+        const toc = document.getElementById('floating-toc-wrapper');
+        if (toc) toc.style.display = 'none'; // Ensure TOC is hidden on homepage
+    }
+}
+
+async function routeAndRender(isPopState = false, hash = '') {
+    console.log(`[routeAndRender] Path: ${window.location.pathname}, PopState: ${isPopState}, Hash: ${hash}`);
+    if (typeof ym === 'function' && !isPopState) ym(103413242, 'hit', window.location.href);
+    
+    const path = window.location.pathname;
+    const detailPageRegex = /^\/(?:([a-z]{2})\/)?(services|portfolio|blog|contact)\/([a-zA-Z0-9-]+)\/?$/;
+    const match = path.match(detailPageRegex);
+
+    if (match) {
+        const [, lang, col, slug] = match;
+        renderDetailPage(col, slug, lang || 'en');
+    } else {
+        await navigateToHome(hash || window.location.hash);
+    }
+    
+    requestAnimationFrame(() => setupObservers()); // Re-setup intersection observers
+    document.documentElement.style.setProperty('--main-visibility', 'visible');
+    updateScrollButtonVisibility();
+    if (!hash && !window.location.hash) window.scrollTo({ top: 0, behavior: 'instant' }); // Scroll to top if no hash
+}
+
+function handleNavigation(e) {
+    const link = e.target.closest('a');
+    // Ignore external links, blank targets, and modified clicks (ctrl/meta/shift)
+    if (!link || link.target === '_blank' || link.protocol !== window.location.protocol || link.host !== window.location.host || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    
+    const targetUrl = new URL(link.href);
+    e.preventDefault(); // Prevent default link behavior for SPA navigation
+
+    const menuToggle = document.querySelector('.menu-toggle'); 
+    const navOverlay = document.querySelector('.nav-overlay');
+    const isMenuOpen = document.body.classList.contains('nav-is-open');
+
+    // Close menu if open before navigating
+    if (isMenuOpen) {
+        document.body.classList.remove('nav-is-open'); 
+        if (menuToggle) menuToggle.classList.remove('is-active'); 
+        if (navOverlay) navOverlay.classList.remove('is-active'); 
+    }
+    const delay = isMenuOpen ? 350 : 0; // Delay navigation if menu is closing
+
+    // Handle same-page anchor links
+    if (targetUrl.pathname === window.location.pathname && targetUrl.hash) {
+        console.log(`[handleNavigation] Same-page anchor navigation to: ${targetUrl.hash}`);
+        setTimeout(() => {
+            window.history.pushState({}, '', targetUrl.href);
+            scrollToElementWithOffset(targetUrl.hash.substring(1), 120);
+        }, delay);
+        return;
+    }
+
+    // Scroll to top if navigating to the same URL without hash
+    if (targetUrl.href === window.location.href) { 
+        window.scrollTo({ top: 0, behavior: 'smooth' }); 
+        return; 
+    }
+
+    // General SPA navigation
+    setTimeout(() => {
+        mainContentEl.classList.add('is-transitioning'); // Add transition class
+        setTimeout(() => {
+            window.history.pushState({}, '', targetUrl.href); // Update browser history
+            routeAndRender(false, targetUrl.hash); // Render new page
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => mainContentEl.classList.remove('is-transitioning')); // Remove transition class
+            });
+        }, 400); // Delay content replacement for animation
+    }, delay);
+}
+
+// --- HOMEPAGE CONTENT HYDRATION ---
+function hydrateHomePageContent() {
+    console.log("[hydrateHomePageContent] Hydrating homepage dynamic sections.");
+    const preData = document.getElementById('preloaded-data');
+    if (preData) {
+        try {
+            const data = JSON.parse(preData.textContent);
+            // Ensure siteData has all collections, even if empty from Jinja template
+            ['services', 'portfolio', 'blog', 'contact'].forEach(k => {
+                if (!siteData[k] || siteData[k].length === 0) siteData[k] = data[k] || [];
+            });
+            preData.remove(); // Remove script tag after use
+        } catch (e) {
+            console.error("[hydrateHomePageContent] Error parsing preloaded data:", e);
+        }
+    }
+    applyCustomBackground(siteData.home);
+    // Render each section dynamically with all language items
+    ['services', 'portfolio', 'blog', 'contact'].forEach(k => renderSection(k, `Our ${k.charAt(0).toUpperCase() + k.slice(1)}`, siteData[k]));
+    
+    // Initialize specific carousels/sliders for homepage
+    initMobileSliders();
+    initDesktopCarousels();
+    initializeCarousel(); // Also initialize glow carousels if any are on home
+    
+    // Setup footer
+    const footer = document.getElementById('site-footer');
+    if (footer) {
+        footer.style.display = 'block';
+        footer.innerHTML = `© ${new Date().getFullYear()} Digital Craft.`;
+        footer.onclick = () => { window.location.href = '/admin.html'; }; // Admin link
+    }
+}
+
+// --- STATIC PAGE HYDRATION (FIRST LOAD) ---
+async function hydrateStaticPage() {
+    console.log("[hydrateStaticPage] Initial page load hydration.");
+    renderMenu();
+    updateScrollButtonVisibility();
+
+    // Capture SSR carousel HTML from source div and remove it
+    const ssr = document.getElementById('ssr-carousel-source');
+    if (ssr) { 
+        ssrCarouselHtml = ssr.innerHTML; 
+        console.log("[hydrateStaticPage] SSR carousel HTML captured.");
+        ssr.remove(); 
+    } else {
+        console.log("[hydrateStaticPage] No SSR carousel source found.");
+    }
+
+    try {
+        siteData = await loadData(); // Load all data from Firebase
+        const match = window.location.pathname.match(/^\/(?:([a-z]{2})\/)?(services|portfolio|blog|contact)\/([a-zA-Z0-9-]+)\/?$/);
+        if (match) {
+            const [, lang, col, slug] = match;
+            const item = siteData[col]?.find(d => d.urlSlug === slug && d.lang === (lang || 'en'));
+            if (item) {
+                applyCustomBackground(item);
+                if (!document.getElementById('related-posts')) renderRelatedPosts(col, slug, lang || 'en');
+            }
+        } else {
+            hydrateHomePageContent(); // If not a detail page, hydrate homepage
+        }
+        initializeCarousel(); // Initialize all carousels after hydration
+    } catch (error) {
+        console.error("[hydrateStaticPage] Error during static page hydration:", error);
+    }
+}
+
+// --- INITIAL EVENT LISTENERS ---
+function initStaticEventListeners() { 
+    document.body.addEventListener('click', handleNavigation); 
+    window.addEventListener('popstate', () => routeAndRender(true)); // Handle browser back/forward buttons
+    
+    const menuToggle = document.querySelector('.menu-toggle'); 
+    const navOverlay = document.querySelector('.nav-overlay');
+
+    if (menuToggle && navOverlay) {
+        menuToggle.addEventListener('click', () => { 
+            document.body.classList.toggle('nav-is-open'); 
+            menuToggle.classList.toggle('is-active'); 
+            navOverlay.classList.toggle('is-active'); 
+        });
+
+        // Close menu if clicking outside of the actual nav-menu within the overlay
+        navOverlay.addEventListener('click', (e) => {
+            if (e.target === navOverlay) { // Check if click was directly on the overlay
+                document.body.classList.remove('nav-is-open'); 
+                menuToggle.classList.remove('is-active'); 
+                navOverlay.classList.remove('is-active'); 
+            }
+        });
+    } else {
+        console.warn("[initStaticEventListeners] Menu toggle or nav overlay not found.");
+    }
+
+    mainContentEl.addEventListener('click', (e) => {
+        // Scroll to top button functionality
+        if (e.target.closest('#scroll-to-top-btn')) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+}
+
+// --- SCROLL TO TOP BUTTON VISIBILITY ---
+function updateScrollButtonVisibility() {
+    const b = document.getElementById('scroll-to-top-btn');
+    if (b) {
+        window.scrollY > 300 ? b.classList.add('visible') : b.classList.remove('visible');
+    }
+}
+
+// --- APP INITIALIZATION ---
+async function initApp() { 
+    firebase.initializeApp(firebaseConfig); 
+    db = firebase.firestore(); 
+
+    initStaticEventListeners();
+    window.addEventListener('scroll', updateScrollButtonVisibility, { passive: true }); // Optimized scroll event
+    
+    if (document.body.dataset.staticPage === 'true') { 
+        await hydrateStaticPage(); // For pages generated by Jinja (home.html, template.html)
+        routeAndRender(false, window.location.hash); // Initial routing logic after hydration
+    } else { 
+        siteData = await loadData(); // If not a static page (e.g., admin.html), just load data
+        renderMenu(); 
+        await routeAndRender(); 
+    } 
+    console.log("App initialized.");
+}
+
+// Start app when DOM is fully loaded
+window.addEventListener('DOMContentLoaded', initApp);
