@@ -4,48 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- ================= НАЧАЛО ИСПРАВЛЕНИЯ URL ================= -->
-    <script>
-      (function() {
-        var path = window.location.pathname;
-        var search = window.location.search;
-        var hash = window.location.hash;
-        var newPath = path;
-        var needsRedirect = false;
-    
-        // --- НАСТРОЙКИ ---
-        var supportedLangs = ['en', 'ka', 'ru', 'uk'];
-        var parts = path.split('/').filter(function(p) { return p !== ''; });
-    
-        // 1. ПРОВЕРКА НА ЯЗЫКОВУЮ ГЛАВНУЮ СТРАНИЦУ (например, /ru/)
-        if (parts.length === 1 && supportedLangs.indexOf(parts[0]) > -1) {
-          newPath = '/';
-          needsRedirect = true;
-        } 
-        // 2. ОБЫЧНЫЕ ПРОВЕРКИ ДЛЯ НОРМАЛИЗАЦИИ URL
-        else {
-          if (path.endsWith('/index.html')) {
-            newPath = path.substring(0, path.length - 'index.html'.length);
-            if (newPath === '') newPath = '/';
-            needsRedirect = true;
-          }
-          else if (path.length > 1 && !path.endsWith('/')) {
-            newPath += '/';
-            needsRedirect = true;
-          }
-        }
-    
-        if (needsRedirect) {
-          window.location.replace(newPath + search + hash);
-        }
-      })();
-    </script>
-    <!-- ================= КОНЕЦ ИСПРАВЛЕНИЯ URL ================= -->
-
-    <!-- SEO-теги для главной страницы из Firebase -->
     <title>{{ home.seoTitle }}</title>
     <meta name="description" content="{{ home.metaDescription }}">
-    
     <link rel="canonical" href="https://digital-craft-tbilisi.site/" />
 
     <meta property="og:title" content="{{ home.ogTitle or home.seoTitle }}">
@@ -54,13 +14,16 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://digital-craft-tbilisi.site/">
 
+    <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.bunny.net/css?family=amaranth:400,400i,700,700i|asap-condensed:200,300i,400,400i,600,600i,700,700i,900,900i|kode-mono:400,500,600,700" rel="stylesheet" />
     
+    <!-- STYLES -->
     <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/new-carousel.css">
 
-    <!-- Schema.org JSON-LD для главной страницы из Firebase -->
     {% if home.schemaJsonLd %}
     <script type="application/ld+json">
     {{ home.schemaJsonLd | tojson | safe }}
@@ -69,7 +32,9 @@
 
     <style>
       :root { --main-visibility: visible !important; }
+      #ssr-carousel-source { display: none; }
     </style>
+    
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
@@ -78,7 +43,6 @@
 </head>
 <body data-static-page="true">
     
-    <!-- Данные для JS-гидратации (сохраняем для интерактивности) -->
     <script id="preloaded-data" type="application/json">
     {{ sections_data | tojson | safe }}
     </script>
@@ -92,14 +56,12 @@
         <ul class="nav-menu"></ul>
     </div>
 
-    <!-- TOC Wrapper for SPA navigation - HIDDEN by default on home page -->
+    <!-- TOC Wrapper -->
     <div id="floating-toc-wrapper" class="floating-toc-wrapper" style="display: none;">
         <button id="toc-toggle-btn" class="toc-toggle-btn" aria-expanded="false" aria-controls="toc-content-panel">
             Table of Contents <span class="toc-arrow"></span>
         </button>
-        <div id="toc-content-panel" class="toc-content-panel" aria-hidden="true">
-            <!-- Content will be filled by JavaScript for detail pages -->
-        </div>
+        <div id="toc-content-panel" class="toc-content-panel" aria-hidden="true"></div>
     </div>
 
     <main>
@@ -110,22 +72,16 @@
             </div>
         </section>
 
-        <!-- 
-           SEO FIX: SERVER-SIDE RENDERING
-           Мы генерируем статический HTML для секций, чтобы роботы видели ссылки.
-           JS (main.js) при загрузке заменит этот контент на интерактивные слайдеры.
-           Добавлены классы animate-on-scroll для начальной видимости до гидратации.
-        -->
-
         <!-- SERVICES SECTION -->
         <section id="services">
             <h2 class="animate-on-scroll">Our Services</h2>
-            <div class="item-grid"> <!-- Используем сетку для отображения без JS -->
+            <div class="item-grid">
             {% for item in sections_data.services %}
                 {% if item.lang == (home.lang or 'en') %}
                     {% set item_url = "/" + item.lang + "/services/" + item.urlSlug + "/" %}
                     <a href="{{ item_url }}" class="item-card animate-on-scroll">
-                        <div class="item-card__image" style="background-image: url('{{ (item.media or ['']) | first }}')"></div>
+                        <!-- LAZY LOAD FIX: data-bg-src instead of style -->
+                        <div class="item-card__image" data-bg-src="{{ (item.media or ['']) | first }}"></div>
                         <div class="item-card__content">
                             <h3>{{ item.title }}</h3>
                             <div class="card-subtitle">{{ item.subtitle }}</div>
@@ -145,7 +101,8 @@
                 {% if item.lang == (home.lang or 'en') %}
                     {% set item_url = "/" + item.lang + "/portfolio/" + item.urlSlug + "/" %}
                     <a href="{{ item_url }}" class="item-card animate-on-scroll">
-                        <div class="item-card__image" style="background-image: url('{{ (item.media or ['']) | first }}')"></div>
+                        <!-- LAZY LOAD FIX: data-bg-src instead of style -->
+                        <div class="item-card__image" data-bg-src="{{ (item.media or ['']) | first }}"></div>
                         <div class="item-card__content">
                             <h3>{{ item.title }}</h3>
                             <div class="card-subtitle">{{ item.subtitle }}</div>
@@ -165,7 +122,8 @@
                 {% if item.lang == (home.lang or 'en') %}
                     {% set item_url = "/" + item.lang + "/blog/" + item.urlSlug + "/" %}
                     <a href="{{ item_url }}" class="item-card animate-on-scroll">
-                        <div class="item-card__image" style="background-image: url('{{ (item.media or ['']) | first }}')"></div>
+                        <!-- LAZY LOAD FIX: data-bg-src instead of style -->
+                        <div class="item-card__image" data-bg-src="{{ (item.media or ['']) | first }}"></div>
                         <div class="item-card__content">
                             <h3>{{ item.title }}</h3>
                             <div class="card-subtitle">{{ item.subtitle }}</div>
@@ -185,7 +143,8 @@
                 {% if item.lang == (home.lang or 'en') %}
                     {% set item_url = "/" + item.lang + "/contact/" + item.urlSlug + "/" %}
                     <a href="{{ item_url }}" class="item-card animate-on-scroll">
-                        <div class="item-card__image" style="background-image: url('{{ (item.media or ['']) | first }}')"></div>
+                        <!-- LAZY LOAD FIX: data-bg-src instead of style -->
+                        <div class="item-card__image" data-bg-src="{{ (item.media or ['']) | first }}"></div>
                         <div class="item-card__content">
                             <h3>{{ item.title }}</h3>
                             <div class="card-subtitle">{{ item.subtitle }}</div>
@@ -205,8 +164,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js" defer></script>
     
     <script type="module" src="/main.js"></script>
+    <script type="module" src="/new-carousel.js"></script>
 
-    <!-- Скрипт для аналитики -->
+    <!-- Yandex Metrika -->
     <script type="text/javascript">
         function loadYandexMetrika() {
             (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};

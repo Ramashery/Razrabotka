@@ -4,29 +4,42 @@ import re
 import shutil
 import html
 import random
+import sys
 from datetime import date, datetime
 from lxml import etree as ET
 import firebase_admin
 from firebase_admin import credentials, firestore
 from jinja2 import Environment, FileSystemLoader
-from transliterate import translit # Импортируем библиотеку для транслитерации
+from transliterate import translit 
 
 # --- НАСТРОЙКА ---
+print("--- Инициализация скрипта ---")
 try:
     if not firebase_admin._apps:
-        service_account_info = json.loads(os.environ.get('FIREBASE_SERVICE_ACCOUNT'))
+        service_account_env = os.environ.get('FIREBASE_SERVICE_ACCOUNT')
+        if not service_account_env:
+            print("✗ ОШИБКА: Переменная окружения FIREBASE_SERVICE_ACCOUNT не найдена.")
+            sys.exit(1)
+            
+        service_account_info = json.loads(service_account_env)
         cred = credentials.Certificate(service_account_info)
         firebase_admin.initialize_app(cred)
     db = firestore.client()
     print("✓ Подключение к Firebase успешно.")
 except Exception as e:
-    print(f"✗ ОШИКА ПОДКЛЮЧЕНИЯ к Firebase: {e}")
-    exit(1)
+    print(f"✗ ОШИБКА ПОДКЛЮЧЕНИЯ к Firebase: {e}")
+    sys.exit(1)
 
-env = Environment(loader=FileSystemLoader('.'))
-home_template = env.get_template('home_template.html')
-detail_template = env.get_template('template.html')
-error_404_template = env.get_template('404_template.html')
+# Настройка Jinja2
+try:
+    env = Environment(loader=FileSystemLoader('.'))
+    home_template = env.get_template('home_template.html')
+    detail_template = env.get_template('template.html')
+    error_404_template = env.get_template('404_template.html')
+    print("✓ Шаблоны Jinja2 успешно загружены.")
+except Exception as e:
+    print(f"✗ ОШИБКА загрузки шаблонов: {e}")
+    sys.exit(1)
 
 OUTPUT_DIR = 'public'
 BASE_URL = "https://digital-craft-tbilisi.site"
@@ -37,95 +50,87 @@ SITEMAP_DEFAULTS = {
     'portfolio': {'priority': '0.8', 'changefreq': 'yearly'},
     'blog': {'priority': '0.7', 'changefreq': 'monthly'},
     'contact': {'priority': '0.5', 'changefreq': 'yearly'},
+    'carouselItems': {'priority': '0.3', 'changefreq': 'monthly'}, 
 }
 
+# Очистка папки
 if os.path.exists(OUTPUT_DIR):
     shutil.rmtree(OUTPUT_DIR)
     print(f"✓ Удалена старая папка '{OUTPUT_DIR}'.")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 print(f"✓ Создана папка '{OUTPUT_DIR}'.")
 
-# Карта транслитерации для грузинского (Mkhedruli) в латиницу (упрощенная для slugs)
 GEORGIAN_TRANSLIT_MAP = {
-    'ა': 'a', 'ბ': 'b', 'გ': 'g', 'დ': 'd', 'ე': 'e', 'ვ': 'v', 'ზ': 'z', 'თ': 't', 'ი': 'i',
+    'ა': 'a', 'ბ': 'b', 'г': 'g', 'დ': 'd', 'ე': 'e', 'ვ': 'v', 'ზ': 'z', 'თ': 't', 'ი': 'i',
     'კ': 'k', 'ლ': 'l', 'მ': 'm', 'ნ': 'n', 'ო': 'o', 'პ': 'p', 'ჟ': 'zh', 'რ': 'r', 'ს': 's',
-    'ტ': 't', 'უ': 'u', 'ფ': 'p', 'ქ': 'k', 'ღ': 'gh', 'ყ': 'q', 'შ': 'sh', 'ჩ': 'ch', 'ც': 'ts',
+    'ტ': 't', 'у': 'u', 'ფ': 'p', 'ქ': 'k', 'ღ': 'gh', 'ყ': 'q', 'შ': 'sh', 'ჩ': 'ch', 'ც': 'ts',
     'ძ': 'dz', 'წ': 'ts', 'ჭ': 'ch', 'ხ': 'kh', 'ჯ': 'j', 'ჰ': 'h',
-    # Добавьте заглавные буквы, если это необходимо до перевода в нижний регистр,
-    # но обычно все равно преобразуется в нижний регистр
 }
 
-# --- НОВАЯ ФУНКЦИЯ ДЛЯ ГЕНЕРАЦИИ ЯКОРНЫХ ССЫЛОК (Универсальная) ---
 def slugify(text):
-    text = str(text).lower() # Убеждаемся, что это строка и приводим к нижнему регистру
-
-    # 1. Обработка грузинских символов
-    # Проверяем, содержит ли текст грузинские символы (диапазон Mkhedruli)
+    text = str(text).lower() 
     has_georgian = any('\u10D0' <= c <= '\u10FF' for c in text)
     if has_georgian:
         transliterated_georgian = "".join(GEORGIAN_TRANSLIT_MAP.get(c, c) for c in text)
-        text = transliterated_georgian # Применяем транслитерацию для дальнейшей обработки
+        text = transliterated_georgian 
 
-    # 2. Обработка кириллических символов
-    # Проверяем, содержит ли текст кириллические символы (диапазон Cyrillic)
     has_cyrillic = any('\u0400' <= c <= '\u04FF' for c in text)
     if has_cyrillic:
         try:
-            # 'ru' локаль хорошо подходит для русского и большинства украинских символов
             text = translit(text, 'ru', reversed=True)
         except Exception as e:
-            # Fallback, если translit не справляется (например, из-за смешанного текста или неподдерживаемых символов)
-            print(f"  [ПРЕДУПРЕЖДЕНИЕ] Ошибка транслитерации кириллицы для '{text}': {e}. Продолжение без транслитерации.")
-            pass # Продолжаем без транслитерации этой части, она будет очищена на следующем шаге.
+            # print(f"  [ПРЕДУПРЕЖДЕНИЕ] Ошибка транслитерации кириллицы для '{text}': {e}.")
+            pass 
 
-    # 3. Общая очистка: удаление всех, кроме латиницы, цифр, пробелов и дефисов
     text = re.sub(r'[^a-z0-9\s-]', '', text)
-
-    # 4. Нормализация дефисов и обрезка
     text = re.sub(r'[\s-]+', '-', text).strip('-')
-
     return text
 
-# --- Функции для получения данных и рендеринга страниц ---
 def get_all_data():
+    print("--- Начало загрузки данных из Firebase ---")
     site_data = {}
     try:
+        print("  > Загрузка Home...")
         home_doc = db.collection('home').document('content').get()
         if home_doc.exists:
             site_data['home'] = home_doc.to_dict()
-            print("✓ Загружены данные для домашней страницы.")
         else:
             site_data['home'] = {}
-            print("! Данные для домашней страницы не найдены.")
 
-        collections = ['services', 'portfolio', 'blog', 'contact']
+        collections = ['services', 'portfolio', 'blog', 'contact', 'carouselItems']
         for col in collections:
-            docs = db.collection(col).stream()
+            print(f"  > Загрузка коллекции '{col}'...")
+            
+            if col == 'carouselItems':
+                docs = db.collection(col).order_by('order').stream()
+            else:
+                docs = db.collection(col).stream()
+            
             site_data[col] = []
+            count = 0
             for doc in docs:
                 doc_data = doc.to_dict()
                 doc_data['id'] = doc.id
                 doc_data['collection_name'] = col
                 
                 if doc_data.get('status') == 'archived':
-                    print(f"  [SKIP] Пропущена архивная страница: {col}/{doc.id}")
                     continue
                 
                 if 'schemaJsonLd' in doc_data and isinstance(doc_data['schemaJsonLd'], str):
                     try:
                         doc_data['schemaJsonLd'] = json.loads(doc_data['schemaJsonLd'])
                     except json.JSONDecodeError:
-                        print(f"  [ПРЕДУПРЕЖДЕНИЕ] Не удалось разобрать schemaJsonLd для {col}/{doc.id}. Оставлено как строка.")
                         doc_data['schemaJsonLd'] = {}
                 
                 site_data[col].append(doc_data)
-            print(f"✓ Загружено {len(site_data[col])} активных документов из коллекции '{col}'.")
+                count += 1
+            print(f"    ✓ Загружено {count} документов из '{col}'.")
         
         print("✓ Все данные из Firestore успешно загружены.")
         return site_data
     except Exception as e:
         print(f"✗ Критическая ОШИБКА при загрузке данных из Firestore: {e}")
-        return None
+        sys.exit(1)
 
 def create_lean_preview(items):
     previews = []
@@ -148,7 +153,7 @@ def create_lean_preview(items):
         previews.append(preview_item)
     return previews
 
-def format_content(content_string):
+def format_content(content_string, all_data=None, lang='en'):
     if not content_string:
         return ""
 
@@ -174,10 +179,14 @@ def format_content(content_string):
     processed_content = processed_content.replace('\r\n', '\n')
     blocks = re.split(r'\n{2,}', processed_content)
     html_parts = []
+    
     for block in blocks:
         trimmed_block = block.strip()
         if not trimmed_block:
             continue
+        
+        # --- CAROUSEL LOGIC ---
+        carousel_match = re.match(r'^\[CAROUSEL:([\w-]+)\]$', trimmed_block)
         
         youtube_regex = r"https?:\/\/(?:www\.|m\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch?v=|watch\?.*&v=|shorts\/))([a-zA-Z0-9_-]{11})"
         image_regex = r"^https?:\/\/[^<>\s]+\.(?:jpg|jpeg|png|gif|webp|svg)\s*$"
@@ -187,28 +196,94 @@ def format_content(content_string):
         image_match = re.match(image_regex, trimmed_block)
         html_match = re.match(html_tag_regex, trimmed_block, re.IGNORECASE)
         
-        if html_match:
+        if carousel_match and all_data:
+            group_key = carousel_match.group(1)
+            carousel_items_for_group = [
+                item for item in all_data.get('carouselItems', [])
+                if item.get('groupKey') == group_key and item.get('lang') == lang
+            ]
+            
+            if carousel_items_for_group:
+                carousel_id = f"glowCarousel-{group_key}-{random.randint(1000, 9999)}"
+                
+                # --- Генерация HTML карусели с новым дизайном ---
+                slides_html = []
+                for item in carousel_items_for_group:
+                    is_link = item.get('linkUrl') and item.get('linkUrl') != '#'
+                    tag = 'a' if is_link else 'div'
+                    href_attr = f'href="{item.get("linkUrl")}" target="_blank" rel="noopener noreferrer"' if is_link else ''
+                    
+                    image_url = item.get('imageUrl', '')
+                    title = item.get('title', '')
+                    role = item.get('role', '')
+                    content = item.get('content', '')
+
+                    # ИЗМЕНЕНИЕ: Используем data-bg-src для lazy loading
+                    slide = f'''
+                    <{tag} {href_attr} class="card">
+                        <div class="card-image-bg" data-bg-src="{image_url}"></div>
+                        <div class="card-inner-content">
+                            <h4>{title}</h4>
+                            <div class="card-subtitle">{role}</div>
+                            <div class="card-desc">{content}</div>
+                        </div>
+                    </{tag}>
+                    '''
+                    slides_html.append(slide)
+                
+                carousel_html = f'''
+                <div class="carousel-container" id="{carousel_id}">
+                    <button class="nav-arrow left">‹</button>
+                    <div class="carousel-track">
+                        {''.join(slides_html)}
+                    </div>
+                    <button class="nav-arrow right">›</button>
+                    <div class="dots"></div>
+                </div>
+                '''
+                html_parts.append(carousel_html)
+            else:
+                print(f"  [INFO] Карусель с ключом '{group_key}' для языка '{lang}' пуста или не найдена.")
+                
+        elif html_match:
             html_parts.append(trimmed_block)
         elif youtube_match:
             video_id = youtube_match.group(1)
             embed_html = f'<div class="embedded-video" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; margin: 1.5em 0; border-radius: 4px; border: 1px solid var(--color-border);"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="https://www.youtube.com/embed/{video_id}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>'
             html_parts.append(embed_html)
         elif image_match:
-            img_html = f'<p style="margin: 1.5em 0;"><img src="{trimmed_block}" alt="Embedded content" style="max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 4px; border: 1px solid var(--color-border);" /></p>'
+            # *** ИЗМЕНЕНИЕ ДЛЯ LAZY LOADING ***
+            # Используем data-src, добавляем класс lazy-load-image и класс animate-on-scroll для родителя.
+            # В src помещаем прозрачный SVG-плейсхолдер.
+            placeholder_svg = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201%201'%3E%3C/svg%3E"
+            img_html = f'<p class="animate-on-scroll" style="margin: 1.5em 0;"><img data-src="{trimmed_block}" src="{placeholder_svg}" class="lazy-load-image" alt="Embedded content" style="max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 4px; border: 1px solid var(--color-border);" /></p>'
             html_parts.append(img_html)
         else:
             html_parts.append('<p>' + trimmed_block.replace('\n', '<br>') + '</p>')
             
     grouped_html = []
     GROUP_SIZE = 3
-    for i in range(0, len(html_parts), GROUP_SIZE):
-        group = html_parts[i:i + GROUP_SIZE]
-        if group:
-            grouped_html.append(f'<div class="content-group">{ "".join(group) }</div>')
+    temp_group = []
+    
+    for part in html_parts:
+        if 'class="carousel-container"' in part:
+            if temp_group:
+                grouped_html.append(f'<div class="content-group">{ "".join(temp_group) }</div>')
+                temp_group = []
+            grouped_html.append(part)
+        else:
+            temp_group.append(part)
+            if len(temp_group) >= GROUP_SIZE:
+                grouped_html.append(f'<div class="content-group">{ "".join(temp_group) }</div>')
+                temp_group = []
+    
+    if temp_group:
+        grouped_html.append(f'<div class="content-group">{ "".join(temp_group) }</div>')
             
     return '\n'.join(grouped_html)
 
 def generate_home_page(all_data):
+    print("--- Генерация Главной Страницы ---")
     try:
         home_data = all_data.get('home')
         sections_data = {
@@ -217,10 +292,20 @@ def generate_home_page(all_data):
             'blog': create_lean_preview(all_data.get('blog', [])),
             'contact': create_lean_preview(all_data.get('contact', []))
         }
+        
+        carousel_count = len(all_data.get('carouselItems', []))
+        print(f"  i Инфо: В память загружено {carousel_count} элементов карусели.")
+
         html_content = home_template.render(home=home_data, sections_data=sections_data)
-        with open(os.path.join(OUTPUT_DIR, 'index.html'), 'w', encoding='utf-8') as f:
+        
+        index_path = os.path.join(OUTPUT_DIR, 'index.html')
+        with open(index_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
+        if not os.path.exists(index_path):
+             print("❌ ОШИБКА: Файл index.html не был создан!")
+             sys.exit(1)
+
         for lang in SUPPORTED_LANGS:
             if lang != 'en':
                 lang_dir = os.path.join(OUTPUT_DIR, lang)
@@ -228,6 +313,7 @@ def generate_home_page(all_data):
         print("✓ Главная страница (основная) и языковые папки успешно сгенерированы.")
     except Exception as e:
         print(f"✗ ОШИБКА при генерации главной страницы: {e}")
+        sys.exit(1)
 
 def generate_detail_page(item, all_data, alternates):
     collection_name = item['collection_name']
@@ -237,60 +323,50 @@ def generate_detail_page(item, all_data, alternates):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     
     try:
-        # --- ЛОГИКА ДЛЯ АВТОМАТИЧЕСКОГО ОГЛАВЛЕНИЯ (TOC) ---
         raw_content = item.get('mainContent', '')
         toc_html = None
         final_content_html = ''
         
-        # Словарь переводов для кнопки
-        toc_titles = {
-            'en': 'Table of Contents',
-            'ru': 'Содержание',
-            'ka': 'სარჩევი',
-            'uk': 'Зміст'
-        }
+        toc_titles = { 'en': 'Table of Contents', 'ru': 'Table of Contents', 'ka': 'Table of Contents', 'uk': 'Table of Contents' }
         toc_title = toc_titles.get(lang, 'Table of Contents')
         
         if raw_content and raw_content.strip().startswith('[TOC]'):
             content_without_toc_marker = raw_content.replace('[TOC]', '', 1).strip()
-            content_html = format_content(content_without_toc_marker)
-            
+            content_html = format_content(content_without_toc_marker, all_data, lang)
             parser = ET.HTMLParser(remove_blank_text=True)
-            tree = ET.fromstring(f'<div>{content_html}</div>', parser)
-            
-            toc_items = []
-            for header in tree.xpath('.//h2|.//h3'):
-                header_text = "".join(header.itertext()).strip()
-                if header_text:
-                    header_slug = slugify(header_text)
-                    header.set('id', header_slug)
-                    toc_items.append({
-                        'level': header.tag,
-                        'text': header_text,
-                        'slug': header_slug
-                    })
-            
-            if toc_items:
-                toc_list_html = '<ul>'
-                for toc_item in toc_items:
-                    class_name = 'toc-level-h3' if toc_item['level'] == 'h3' else ''
-                    toc_list_html += f'<li class="{class_name}"><a href="#{toc_item["slug"]}">{toc_item["text"]}</a></li>'
-                toc_list_html += '</ul>'
-                toc_html = toc_list_html
+            try:
+                tree = ET.fromstring(f'<div>{content_html}</div>', parser)
+                
+                # TOC генератор ищет только h2 и h3. h4 (в карусели) игнорируются.
+                toc_items = []
+                for header in tree.xpath('.//h2|.//h3'):
+                    header_text = "".join(header.itertext()).strip()
+                    if header_text:
+                        header_slug = slugify(header_text)
+                        header.set('id', header_slug)
+                        toc_items.append({ 'level': header.tag, 'text': header_text, 'slug': header_slug })
+                
+                if toc_items:
+                    toc_list_html = '<ul>'
+                    for toc_item in toc_items:
+                        class_name = 'toc-level-h3' if toc_item['level'] == 'h3' else ''
+                        toc_list_html += f'<li class="{class_name}"><a href="#{toc_item["slug"]}">{toc_item["text"]}</a></li>'
+                    toc_list_html += '</ul>'
+                    toc_html = toc_list_html
 
-            # === ИСПРАВЛЕНИЕ ПРОБЛЕМЫ №3 ===
-            # Извлекаем контент из тега <body>, который lxml создает автоматически,
-            # чтобы избежать вложенности <body> в итоговом HTML.
-            body_content = tree.find('body')
-            if body_content is not None:
-                final_content_html = "".join([ET.tostring(child, encoding='unicode', method='html') for child in body_content])
-            else:
-                # Резервный вариант на случай, если <body> не найден
-                final_content_html = "".join([ET.tostring(child, encoding='unicode', method='html') for child in tree])
+                body_content = tree.find('body')
+                if body_content is not None:
+                    final_content_html = "".join([ET.tostring(child, encoding='unicode', method='html') for child in body_content])
+                else:
+                    final_content_html = "".join([ET.tostring(child, encoding='unicode', method='html') for child in tree])
+            except Exception as e:
+                print(f"  ! Ошибка парсинга XML/HTML для TOC в {slug}: {e}")
+                final_content_html = format_content(content_without_toc_marker, all_data, lang)
         else:
-            final_content_html = format_content(raw_content)
-        # --- КОНЕЦ ЛОГИКИ TOC ---
-
+            final_content_html = format_content(raw_content, all_data, lang)
+        
+        carousel_html_footer = "" 
+        
         pool = all_data.get('services', []) + all_data.get('blog', []) + all_data.get('portfolio', [])
         candidates = [cand for cand in pool if cand.get('lang') == lang and cand.get('urlSlug') != slug and 'urlSlug' in cand]
         if len(candidates) > 6:
@@ -304,21 +380,22 @@ def generate_detail_page(item, all_data, alternates):
             alternates=alternates,
             toc_html=toc_html,
             toc_title=toc_title,
-            final_content_html=final_content_html
+            final_content_html=final_content_html,
+            carousel_html=carousel_html_footer 
         )
         with open(path, 'w', encoding='utf-8') as f:
             f.write(html_content)
-        print(f"  ✓ Создана страница: {os.path.join(lang, collection_name, slug)}")
     except Exception as e:
         print(f"✗ ОШИБКА при рендере страницы {collection_name}/{slug}: {e}")
 
 def copy_static_assets():
-    print("\nНачинаю копирование статических файлов (CSS, JS, и т.д.)...")
+    print("--- Копирование статических файлов ---")
     ignore_list = {
         '.git', '.github', OUTPUT_DIR, 'generate_site.py', 'test_sitemap_data.py',
-        'template.html', 'home_template.html', '404_template.html', 'firebase.json', 'README.md',
-        '__pycache__', 'index.html', 'page.html', 'admin.txt', 'main.txt', 'sitemap.xml',
-        'package.json', 'package-lock.json', 'node_modules', 'requirements.txt'
+        'template.html', 'home_template.html', '404_template.html', 'new-carousel_template.html',
+        'firebase.json', 'README.md', '__pycache__', 'index.html', 'page.html', 'admin.txt', 'main.txt', 'sitemap.xml',
+        'package.json', 'package-lock.json', 'node_modules', 'requirements.txt',
+        'carousel_template.html'
     }
     for item_name in os.listdir('.'):
         if item_name not in ignore_list:
@@ -331,170 +408,141 @@ def copy_static_assets():
                     shutil.copytree(source_path, dest_path, dirs_exist_ok=True)
             except Exception as e:
                 print(f"✗ Не удалось скопировать '{item_name}': {e}")
-    print("✓ Копирование статических файлов завершено.")
+    print("✓ Копирование завершено.")
 
 def build_url_for_sitemap(page):
     lang = page.get('lang', 'en')
     collection_name = page.get('collection_name', '')
     slug = page.get('urlSlug', '')
-    if collection_name == 'home':
-        return f"{BASE_URL}/"
+    if collection_name == 'home': return f"{BASE_URL}/"
+    if collection_name == 'carouselItems': return None 
     return f"{BASE_URL}/{lang}/{collection_name}/{slug}/"
 
 def generate_sitemap_xml(pages_for_sitemap, all_data):
-    print("\n" + "="*60)
-    print("НАЧАЛО ГЕНЕРАЦИИ SITEMAP XML")
-    print("="*60)
-    SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
-    XHTML_NS = "http://www.w3.org/1999/xhtml"
-    NSMAP = {None: SITEMAP_NS, "xhtml": XHTML_NS}
-    urlset = ET.Element("urlset", nsmap=NSMAP)
-    print("1. Добавляю главную страницу...")
-    home_data = all_data.get('home', {})
-    home_lastmod_iso = home_data.get('lastModified')
-    home_lastmod = date.today().isoformat()
-    if home_lastmod_iso:
-        try:
-            home_lastmod = datetime.fromisoformat(home_lastmod_iso.replace("Z", "+00:00")).strftime('%Y-%m-%d')
-        except ValueError:
-            pass
-    url_el = ET.SubElement(urlset, "url")
-    ET.SubElement(url_el, "loc").text = f"{BASE_URL}/"
-    ET.SubElement(url_el, "lastmod").text = home_lastmod
-    ET.SubElement(url_el, "changefreq").text = SITEMAP_DEFAULTS['home']['changefreq']
-    ET.SubElement(url_el, "priority").text = SITEMAP_DEFAULTS['home']['priority']
-    print(f"\n2. Обрабатываю {len(pages_for_sitemap)} внутренних страниц...")
-    pages_for_sitemap = [p for p in pages_for_sitemap if p.get('collection_name') != 'home']
-    grouped = {}
-    loners = []
-    for page in pages_for_sitemap:
-        key = page.get('translationGroupKey')
-        if key is not None and str(key).strip() != '':
-            group_key_str = str(key).strip()
-            grouped.setdefault(group_key_str, []).append(page)
-        else:
-            loners.append(page)
-    for group_key, pages_in_group in grouped.items():
-        if not pages_in_group: continue
-        hreflang_map = {}
-        for page_in_group in pages_in_group:
-            lang = page_in_group.get('lang')
-            if lang and lang in SUPPORTED_LANGS:
-                region = page_in_group.get('region', '').strip().upper()
-                url = build_url_for_sitemap(page_in_group)
-                hreflang_map[lang] = (url, region)
-        for page in pages_in_group:
-            url_el = ET.SubElement(urlset, "url")
-            loc = build_url_for_sitemap(page)
-            ET.SubElement(url_el, "loc").text = loc
-            last_mod_str = page.get('lastModified')
-            lastmod = date.today().isoformat()
-            if last_mod_str:
-                try:
-                    lastmod = datetime.fromisoformat(last_mod_str.replace("Z", "+00:00")).strftime('%Y-%m-%d')
-                except ValueError:
-                    pass
-            ET.SubElement(url_el, "lastmod").text = lastmod
-            changefreq = page.get('sitemapChangefreq') or SITEMAP_DEFAULTS.get(page.get('collection_name'), {}).get('changefreq', 'monthly')
-            priority = page.get('sitemapPriority') or SITEMAP_DEFAULTS.get(page.get('collection_name'), {}).get('priority', '0.6')
-            ET.SubElement(url_el, "changefreq").text = str(changefreq)
-            ET.SubElement(url_el, "priority").text = str(priority)
-            if len(hreflang_map) > 1:
-                if 'en' in hreflang_map:
-                    en_url, _ = hreflang_map['en']
-                    ET.SubElement(url_el, f"{{{XHTML_NS}}}link", rel="alternate", hreflang="x-default", href=en_url)
-                for lang_code, (href_url, region_code) in hreflang_map.items():
-                    hreflang_attr_value = f"{lang_code}-{region_code}" if region_code else lang_code
-                    ET.SubElement(url_el, f"{{{XHTML_NS}}}link", rel="alternate", hreflang=hreflang_attr_value, href=href_url)
-    for page in loners:
+    print("--- Генерация Sitemap XML ---")
+    try:
+        SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
+        XHTML_NS = "http://www.w3.org/1999/xhtml"
+        NSMAP = {None: SITEMAP_NS, "xhtml": XHTML_NS}
+        urlset = ET.Element("urlset", nsmap=NSMAP)
+        
+        home_data = all_data.get('home', {})
+        home_lastmod_iso = home_data.get('lastModified')
+        home_lastmod = date.today().isoformat()
+        if home_lastmod_iso:
+            try: home_lastmod = datetime.fromisoformat(home_lastmod_iso.replace("Z", "+00:00")).strftime('%Y-%m-%d')
+            except ValueError: pass
         url_el = ET.SubElement(urlset, "url")
-        loc = build_url_for_sitemap(page)
-        ET.SubElement(url_el, "loc").text = loc
-        last_mod_str = page.get('lastModified')
-        lastmod = date.today().isoformat()
-        if last_mod_str:
-            try:
-                lastmod = datetime.fromisoformat(last_mod_str.replace("Z", "+00:00")).strftime('%Y-%m-%d')
-            except ValueError:
-                pass
-        ET.SubElement(url_el, "lastmod").text = lastmod
-        changefreq = page.get('sitemapChangefreq') or SITEMAP_DEFAULTS.get(page.get('collection_name'), {}).get('changefreq', 'monthly')
-        priority = page.get('sitemapPriority') or SITEMAP_DEFAULTS.get(page.get('collection_name'), {}).get('priority', '0.6')
-        ET.SubElement(url_el, "changefreq").text = str(changefreq)
-        ET.SubElement(url_el, "priority").text = str(priority)
-    xml_string = ET.tostring(urlset, pretty_print=True, xml_declaration=True, encoding='UTF-8')
-    output_path = os.path.join(OUTPUT_DIR, 'sitemap.xml')
-    with open(output_path, 'wb') as f:
-        f.write(xml_string)
-    print("\n" + "="*60)
-    print("РЕЗУЛЬТАТ ГЕНЕРАЦИИ SITEMAP")
-    print("="*60)
-    print(f"✓ Файл sitemap.xml создан. Всего URL: {len(urlset)}")
+        ET.SubElement(url_el, "loc").text = f"{BASE_URL}/"
+        ET.SubElement(url_el, "lastmod").text = home_lastmod
+        ET.SubElement(url_el, "changefreq").text = SITEMAP_DEFAULTS['home']['changefreq']
+        ET.SubElement(url_el, "priority").text = SITEMAP_DEFAULTS['home']['priority']
+        
+        pages_for_sitemap = [p for p in pages_for_sitemap if p.get('collection_name') != 'home' and p.get('collection_name') != 'carouselItems']
+        
+        grouped = {}
+        loners = []
+        for page in pages_for_sitemap:
+            key = page.get('translationGroupKey')
+            if key is not None and str(key).strip() != '':
+                grouped.setdefault(str(key).strip(), []).append(page)
+            else:
+                loners.append(page)
+        
+        for group_key, pages_in_group in grouped.items():
+            if not pages_in_group: continue
+            hreflang_map = {}
+            for page_in_group in pages_in_group:
+                lang = page_in_group.get('lang')
+                if lang and lang in SUPPORTED_LANGS:
+                    region = page_in_group.get('region', '').strip().upper()
+                    url = build_url_for_sitemap(page_in_group)
+                    if url: hreflang_map[lang] = (url, region)
+            for page in pages_in_group:
+                loc = build_url_for_sitemap(page)
+                if not loc: continue
+                url_el = ET.SubElement(urlset, "url")
+                ET.SubElement(url_el, "loc").text = loc
+                last_mod_str = page.get('lastModified')
+                lastmod = date.today().isoformat()
+                if last_mod_str:
+                    try: lastmod = datetime.fromisoformat(last_mod_str.replace("Z", "+00:00")).strftime('%Y-%m-%d')
+                    except ValueError: pass
+                ET.SubElement(url_el, "lastmod").text = lastmod
+                ET.SubElement(url_el, "changefreq").text = str(page.get('sitemapChangefreq') or 'monthly')
+                ET.SubElement(url_el, "priority").text = str(page.get('sitemapPriority') or '0.6')
+                if len(hreflang_map) > 1:
+                    if 'en' in hreflang_map: ET.SubElement(url_el, f"{{{XHTML_NS}}}link", rel="alternate", hreflang="x-default", href=hreflang_map['en'][0])
+                    for lang_code, (href_url, region_code) in hreflang_map.items():
+                        hreflang_attr_value = f"{lang_code}-{region_code}" if region_code else lang_code
+                        ET.SubElement(url_el, f"{{{XHTML_NS}}}link", rel="alternate", hreflang=hreflang_attr_value, href=href_url)
+        
+        for page in loners:
+            loc = build_url_for_sitemap(page)
+            if not loc: continue
+            url_el = ET.SubElement(urlset, "url")
+            ET.SubElement(url_el, "loc").text = loc
+            ET.SubElement(url_el, "lastmod").text = date.today().isoformat()
+            ET.SubElement(url_el, "changefreq").text = str(page.get('sitemapChangefreq') or 'monthly')
+            ET.SubElement(url_el, "priority").text = str(page.get('sitemapPriority') or '0.6')
 
-# --- Основная функция ---
+        output_path = os.path.join(OUTPUT_DIR, 'sitemap.xml')
+        with open(output_path, 'wb') as f:
+            f.write(ET.tostring(urlset, pretty_print=True, xml_declaration=True, encoding='UTF-8'))
+        print(f"✓ Файл sitemap.xml создан.")
+    except Exception as e:
+        print(f"✗ ОШИБКА Sitemap: {e}")
+
 def main():
-    print("!!! ВЫПОЛНЯЕТСЯ ОБНОВЛЕННАЯ ВЕРСИЯ generate_site.py !!!")
-    all_data = get_all_data()
-    if not all_data:
-        print("✗ Отмена генерации сайта из-за ошибки загрузки данных.")
-        return
+    print("!!! ЗАПУСК ГЕНЕРАЦИИ САЙТА (FINAL CAROUSEL UPDATE) !!!")
     
+    all_data = get_all_data()
+    
+    if not all_data:
+        print("❌ ОШИБКА: Данные не загружены. Прерывание сборки.")
+        sys.exit(1)
+
     generate_home_page(all_data)
     
-    valid_pages_for_sitemap = []
-    collections_to_generate = ['services', 'portfolio', 'blog', 'contact']
+    valid_pages = []
+    collections = ['services', 'portfolio', 'blog', 'contact', 'carouselItems']
     
-    print("\nГруппировка страниц по ключу перевода для hreflang...")
     translations_map = {}
-    all_items_flat = []
-    for collection in collections_to_generate:
-        all_items_flat.extend(all_data.get(collection, []))
+    for col in collections:
+        for item in all_data.get(col, []):
+            key = item.get('translationGroupKey')
+            if key and key.strip(): translations_map.setdefault(key.strip(), []).append(item)
 
-    for item in all_items_flat:
-        key = item.get('translationGroupKey')
-        if key and key.strip():
-            clean_key = key.strip()
-            if clean_key not in translations_map:
-                translations_map[clean_key] = []
-            translations_map[clean_key].append(item)
-    print(f"✓ Найдено {len(translations_map)} групп перевода для hreflang.")
-    
-    print("\nНачинаю генерацию детальных страниц:")
-    for collection in collections_to_generate:
+    print("--- Генерация детальных страниц ---")
+    for collection in collections:
+        if collection == 'carouselItems':
+            for item in all_data.get(collection, []):
+                if item.get('urlSlug') and item.get('lang'): valid_pages.append(item)
+            continue
         if collection in all_data:
             for item in all_data[collection]:
                 if item.get('urlSlug') and item.get('lang'):
-                    translation_key = item.get('translationGroupKey', '').strip()
-                    alternates = translations_map.get(translation_key, [])
-                    generate_detail_page(item, all_data, alternates)
-                    valid_pages_for_sitemap.append(item)
-                else:
-                    print(f"  [ПРЕДУПРЕЖДЕНИЕ] Пропущен элемент в '{collection}' (ID: {item.get('id', 'N/A')})")
-        else:
-            print(f"  [ПРЕДУПРЕЖДЕНИЕ] Коллекция '{collection}' не найдена в данных Firebase.")
+                    generate_detail_page(item, all_data, translations_map.get(item.get('translationGroupKey', '').strip(), []))
+                    valid_pages.append(item)
+    print("✓ Детальные страницы обработаны.")
     
     copy_static_assets()
     
-    print(f"\n" + "="*60)
-    print(f"Подготовка данных для sitemap.xml...")
-    if valid_pages_for_sitemap:
-        generate_sitemap_xml(valid_pages_for_sitemap, all_data)
-    else:
-        print("! Не найдено валидных страниц для создания sitemap.xml.")
+    if valid_pages: 
+        generate_sitemap_xml(valid_pages, all_data)
     
-    print("\nСоздание 404.html из шаблона...")
     try:
-        html_content_404 = error_404_template.render()
-        not_found_path = os.path.join(OUTPUT_DIR, '404.html')
-        with open(not_found_path, 'w', encoding='utf-8') as f:
-            f.write(html_content_404)
-        print("✓ Файл 404.html успешно создан.")
-    except Exception as e:
-        print(f"✗ ВНИМАНИЕ: Не удалось создать 404.html: {e}")
-
-    print("\n" + "="*60)
-    print("Генерация сайта полностью завершена!")
-    print("="*60)
+        with open(os.path.join(OUTPUT_DIR, '404.html'), 'w', encoding='utf-8') as f:
+            f.write(error_404_template.render())
+        print("✓ Файл 404.html создан.")
+    except Exception as e: 
+        print(f"✗ Ошибка 404: {e}")
+    
+    if not os.path.exists(os.path.join(OUTPUT_DIR, 'index.html')):
+        print("❌ КРИТИЧЕСКАЯ ОШИБКА: index.html отсутствует в финальной папке!")
+        sys.exit(1)
+        
+    print("\n" + "="*60 + "\nГенерация УСПЕШНО завершена!\n" + "="*60)
 
 if __name__ == '__main__':
     main()

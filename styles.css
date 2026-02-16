@@ -7,6 +7,17 @@
     --color-border: rgba(184, 216, 232, 0.2);
     --font-main: 'Inter', sans-serif;
     --header-height: 80px;
+
+    /* NEW: Carousel specific variables, mapped to existing ones for consistency */
+    --mzaC-fg: var(--color-text); /* Foreground text color */
+    --mzaC-accent: var(--color-accent); /* Main accent color */
+    --mzaC-accent2: #82a0ff; /* Secondary accent for gradients, can be adjusted */
+    --mzaC-glass: var(--color-card); /* Background for card, semi-transparent */
+    --mzaC-glow: rgba(184, 216, 232, 0.75); /* Glow effect, based on your accent */
+    --mzaC-slideW: min(880px, 90vw); /* Width of a single slide */
+    --mzaC-peek: 0.15; /* How much of the next/prev slide is visible */
+    --mzaPagH: 64px; /* Height reserved for pagination */
+    --mzaCardH: clamp(360px, 62vh, 600px); /* Height of the card */
 }
 
 /* --- Base Styles --- */
@@ -538,4 +549,19 @@ section[id] { scroll-margin-top: calc(var(--header-height) + 20px); }
     padding-left: 20px;
     font-size: 0.9rem;
     opacity: 0.7;
+}
+
+/* --- Lazy Loading for Content Images --- */
+.detail-content img.lazy-load-image {
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+    /* Задаем минимальную высоту, чтобы предотвратить скачок контента (CLS) */
+    min-height: 250px; 
+    background-color: rgba(184, 216, 232, 0.05);
+    border-radius: 4px;
+}
+
+.detail-content img.lazy-load-image.loaded {
+    opacity: 1;
+    min-height: auto; /* Сбрасываем после загрузки */
 }

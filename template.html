@@ -67,11 +67,16 @@
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
+    <!-- ФОНТЫ ДЛЯ ОСНОВНОГО САЙТА И КАРУСЕЛИ -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.bunny.net/css?family=amaranth:400,400i,700,700i|asap-condensed:200,300i,400,400i,600,600i,700,700i,900,900i|kode-mono:400,500,600,700" rel="stylesheet" />
     
     <link rel="stylesheet" href="/styles.css">
+    
+    <!-- ПОДКЛЮЧАЕМ НОВУЮ КАРУСЕЛЬ -->
+    <link rel="stylesheet" href="/new-carousel.css">
 
     {% if item.schemaJsonLd %}
     <script type="application/ld+json">
@@ -81,6 +86,7 @@
 
     <style>
       :root { --main-visibility: visible !important; }
+      #ssr-carousel-source { display: none; }
     </style>
 </head>
 <body data-static-page="true">
@@ -123,8 +129,9 @@
             <div class="item-grid">
             {% for related in related_items %}
                 {% set related_url = '/' + related.lang + '/' + related.collection_name + '/' + related.urlSlug + '/' %}
-                <a href="{{ related_url }}" class="item-card">
-                    <div class="item-card__image" style="background-image: url('{{ (related.media or ['']) | first }}')"></div>
+                <a href="{{ related_url }}" class="item-card animate-on-scroll">
+                    <!-- LAZY LOAD FIX: data-bg-src instead of style -->
+                    <div class="item-card__image" data-bg-src="{{ (related.media or ['']) | first }}"></div>
                     <div class="item-card__content">
                         <h3>{{ related.title }}</h3>
                         <div class="card-subtitle">{{ related.subtitle }}</div>
@@ -134,6 +141,18 @@
             {% endfor %}
             </div>
         </section>
+        {% endif %}
+
+        <!-- Видимый контейнер для карусели (отображается сразу при загрузке) -->
+        <div id="carousel-placeholder">
+            {% if carousel_html %}
+                {{ carousel_html | safe }}
+            {% endif %}
+        </div>
+
+        <!-- Скрытый источник для JS-роутера -->
+        {% if carousel_html %}
+        <div id="ssr-carousel-source">{{ carousel_html | safe }}</div>
         {% endif %}
 
         <button id="scroll-to-top-btn" title="Наверх">
@@ -151,6 +170,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js" defer></script>
     
     <script type="module" src="/main.js"></script>
+    <!-- ЗАГРУЖАЕМ СКРИПТ НОВОЙ КАРУСЕЛИ -->
+    <script type="module" src="/new-carousel.js"></script>
 
 </body>
 </html>
