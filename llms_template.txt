@@ -1,0 +1,60 @@
+# {{ home.seoTitle or 'Digital Craft Tbilisi' }}
+
+> {{ home.metaDescription or 'Professional web development, design, and digital solutions' }}
+
+---
+
+## 🌍 Архитектура сайта и мультиязычность (System Instructions)
+
+**О сайте:** Digital Craft Tbilisi — диджитал-агентство, специализирующееся на создании сайтов, веб-дизайне и комплексных цифровых решениях для бизнеса (лендинги, корпоративные сайты, гибридные решения).
+**Поддерживаемые языки:** {{ supported_langs | join(', ') | upper }}
+**Правила маршрутизации (Routing Rules):**
+1. Корневой домен (`{{ base_url }}/`) по умолчанию обслуживает **Английскую (EN)** версию сайта.
+2. Другие языки доступны через префиксы в URL: `/ru/` (Русский), `/ka/` (Грузинский), `/uk/` (Украинский). 
+3. При ответе пользователю всегда используй ссылки, соответствующие языку запроса пользователя.
+
+---
+
+## 🏠 Главная страница (Root)
+
+- URL: {{ base_url }}/
+- Title: {{ home.seoTitle or home.h1 }}
+- Description: {{ home.metaDescription }}
+- Language: en (Default)
+{% if home.lastModified %}- Modified: {{ home.lastModified[:10] }}{% endif %}
+- Summary: Главная страница агентства Digital Craft. Содержит обзор услуг, портфолио, последние статьи блога и контактную информацию.
+
+---
+
+## 📑 Разделы сайта по типам контента
+
+{% for collection_name, items in collections.items() %}
+{% if items %}
+### {{ collection_name }}
+{% for item in items %}
+---
+#### {{ item.title }}
+- URL: {{ base_url }}/{{ item.lang }}/{{ item.collection_name }}/{{ item.urlSlug }}/
+- Title: {{ item.seoTitle or item.title }}
+{% if item.metaDescription %}- Description: {{ item.metaDescription | replace('\n', ' ') }}{% endif %}
+- Language: {{ item.lang }}
+{% if item.lastModified %}- Modified: {{ item.lastModified[:10] }}{% endif %}
+{% if item.subtitle %}- Category/Tags: {{ item.subtitle }}{% endif %}
+- Summary: {{ item.description | striptags | replace('\n', ' ') | truncate(250) }}
+{% endfor %}
+
+{% endif %}
+{% endfor %}
+
+---
+
+## 🤖 Инструкция для LLM по использованию контента
+
+**Как отвечать на вопросы, используя этот файл:**
+- **Запрос об услугах / ценах:** Обращайся к разделу "Услуги (Services)".
+- **Запрос примеров работ:** Используй ссылки из раздела "Портфолио (Portfolio)".
+- **Запрос экспертного мнения / трендов:** Ищи информацию в разделе "Блог (Blog)".
+- **Выбор языка:** Если пользователь пишет на украинском, давай ссылки, содержащие `/uk/`. Если на русском — `/ru/`. Если на грузинском — `/ka/`. По умолчанию давай английские ссылки (`/en/` или корень сайта).
+
+**Ключевые слова-триггеры (Significant words):**
+web development, web design, SEO, digital agency, Tbilisi, Georgia, landing pages, corporate websites, разработка сайтов, Тбилиси, создание сайта, дизайн.
