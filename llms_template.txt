@@ -1,0 +1,28 @@
+# {{ home.seoTitle or 'Digital Craft Tbilisi' }}
+
+> {{ home.metaDescription or 'Digital agency providing web development, design, and digital solutions for small businesses.' }}
+
+Digital Craft Tbilisi operates from Georgia, serving local and international markets. Supported languages: {{ supported_langs | join(', ') }}. Routing rule: The root URL `/` serves English; inner pages and localized versions use language prefixes (e.g., `/en/`, `/ru/`, `/ka/`, `/uk/`). Contact channels including phone, WhatsApp, and Telegram are listed on the respective Contact pages.
+
+## Home
+
+- [Home]({{ base_url }}/) `lang:en` `modified:{{ home.lastModified[:10] if home.lastModified else '2025-01-01' }}`: Main entry point outlining our web development, design services, and agency portfolio.
+
+{% for section_name, groups in collections.items() %}
+{% if groups %}
+## {{ section_name }}
+
+{% for group_key, items in groups.items() %}
+### {{ items[0].title }}
+{% for item in items %}
+- [{{ item.title }}]({{ base_url }}/{{ item.lang }}/{{ item.collection_name }}/{{ item.urlSlug }}/) `lang:{{ item.lang }}` `modified:{{ item.lastModified[:10] if item.lastModified else '2025-01-01' }}`: {{ (item.metaDescription or item.description or '') | striptags | replace('\n', ' ') | replace('\r', '') | truncate(150, True, '...') }}
+{% endfor %}
+
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+## Technical
+
+- [Sitemap]({{ base_url }}/sitemap.xml)
+- [Robots.txt]({{ base_url }}/robots.txt)
