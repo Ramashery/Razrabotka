@@ -3,6 +3,7 @@
 > Digital agency providing web development, design, and digital solutions for small businesses.
 
 Digital Craft Tbilisi operates from Georgia, serving local and international markets. Supported languages: {{ supported_langs | join(', ') }}. Routing rule: The root URL `/` serves English; inner pages and localized versions use language prefixes (e.g., `/en/`, `/ru/`, `/ka/`, `/uk/`). Contact channels including phone, WhatsApp, and Telegram are listed on the respective Contact pages.
+Structured data: Organization, WebSite, BreadcrumbList, Article, FAQPage.
 
 ## Home
 
