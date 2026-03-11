@@ -1,6 +1,6 @@
-# {{ home.seoTitle or 'Digital Craft Tbilisi' }}
+# Digital Craft Tbilisi
 
-> {{ home.metaDescription or 'Digital agency providing web development, design, and digital solutions for small businesses.' }}
+> Digital agency providing web development, design, and digital solutions for small businesses.
 
 Digital Craft Tbilisi operates from Georgia, serving local and international markets. Supported languages: {{ supported_langs | join(', ') }}. Routing rule: The root URL `/` serves English; inner pages and localized versions use language prefixes (e.g., `/en/`, `/ru/`, `/ka/`, `/uk/`). Contact channels including phone, WhatsApp, and Telegram are listed on the respective Contact pages.
 
@@ -13,9 +13,10 @@ Digital Craft Tbilisi operates from Georgia, serving local and international mar
 ## {{ section_name }}
 
 {% for group_key, items in groups.items() %}
-### {{ items[0].title }}
+{% set en_item = items | selectattr('lang', 'equalto', 'en') | first %}
+### {{ en_item.title if en_item else items[0].title }}
 {% for item in items %}
-- [{{ item.title }}]({{ base_url }}/{{ item.lang }}/{{ item.collection_name }}/{{ item.urlSlug }}/) `lang:{{ item.lang }}` `modified:{{ item.lastModified[:10] if item.lastModified else '2025-01-01' }}`: {{ (item.metaDescription or item.description or '') | striptags | replace('\n', ' ') | replace('\r', '') | truncate(150, True, '...') }}
+- [{{ item.title }}]({{ base_url }}/{{ item.lang }}/{{ item.collection_name }}/{{ item.urlSlug }}/) `lang:{{ item.lang }}` `modified:{{ item.lastModified[:10] if item.lastModified else '2025-01-01' }}`: {{ (item.metaDescription or item.description or '') | striptags | replace('\n', ' ') | replace('\r', '') | trim }}
 {% endfor %}
 
 {% endfor %}
