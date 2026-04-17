@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics — digital-craft-tbilisi.site</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Kode+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #030409;
+  --bg2: #0a0d18;
+  --card: rgba(25, 29, 45, 0.6);
+  --border: rgba(184, 216, 232, 0.15);
+  --accent: #b8d8e8;
+  --accent2: #82a0ff;
+  --accent3: #7fe4c0;
+  --text: #ffffff;
+  --text-dim: rgba(255,255,255,0.55);
+  --red: #ff6b7a;
+  --green: #7fe4c0;
+  --font: 'Inter', sans-serif;
+  --mono: 'Kode Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(184,216,232,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 90% 80%, rgba(130,160,255,0.04) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+.shell { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+aside {
+  width: 240px; flex-shrink: 0;
+  background: var(--card); border-right: 1px solid var(--border);
+  backdrop-filter: blur(20px); padding: 32px 0;
+  position: sticky; top: 0; height: 100vh;
+  display: flex; flex-direction: column; overflow-y: auto;
+}
+.logo { padding: 0 24px 28px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.logo-label { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+.logo-title { font-size: 0.9rem; font-weight: 700; color: var(--accent); letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav-section { padding: 0 12px; margin-bottom: 24px; }
+.nav-section-label { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); padding: 0 12px; margin-bottom: 6px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 6px; cursor: pointer; color: var(--text-dim); font-size: 0.875rem; font-weight: 500; transition: all 0.2s; border: 1px solid transparent; text-decoration: none; }
+.nav-item:hover { color: var(--text); background: rgba(184,216,232,0.06); }
+.nav-item.active { color: var(--accent); background: rgba(184,216,232,0.1); border-color: var(--border); }
+.nav-item .icon { font-size: 1rem; flex-shrink: 0; width: 18px; text-align: center; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-left: auto; box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.sidebar-footer { margin-top: auto; padding: 16px 24px; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--text-dim); }
+.online-count { font-family: var(--mono); color: var(--green); font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 2px; }
+main { flex: 1; padding: 32px 36px; overflow-y: auto; max-width: calc(100vw - 240px); }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
+.page-title { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.3px; }
+.page-title span { color: var(--accent); }
+.header-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.range-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-family: var(--font); font-weight: 500; transition: all 0.2s; }
+.range-btn:hover { color: var(--text); border-color: rgba(184,216,232,0.4); }
+.range-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(184,216,232,0.08); }
+.export-btn { background: rgba(184,216,232,0.1); border: 1px solid var(--border); color: var(--accent); padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-family: var(--font); font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+.export-btn:hover { background: rgba(184,216,232,0.18); }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; position: relative; overflow: hidden; transition: border-color 0.3s, transform 0.3s; }
+.kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), transparent); opacity: 0; transition: opacity 0.3s; }
+.kpi-card:hover { border-color: rgba(184,216,232,0.4); transform: translateY(-2px); }
+.kpi-card:hover::before { opacity: 1; }
+.kpi-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; font-family: var(--mono); }
+.kpi-value { font-size: 1.9rem; font-weight: 700; line-height: 1; font-family: var(--mono); color: var(--text); margin-bottom: 8px; }
+.kpi-delta { font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.kpi-delta.up { color: var(--green); }
+.kpi-delta.down { color: var(--red); }
+.kpi-icon { position: absolute; top: 18px; right: 18px; font-size: 1.4rem; opacity: 0.25; }
+.section { margin-bottom: 28px; }
+.section-title { font-size: 0.72rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); font-family: var(--mono); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 28px; }
+.chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 24px; }
+.chart-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.chart-card-title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+.chart-card-sub { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+.chart-legend { display: flex; gap: 12px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; color: var(--text-dim); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.chart-wrapper { position: relative; height: 220px; }
+.tables-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+.table-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.table-card-header { padding: 18px 22px 14px; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-weight: 600; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { padding: 10px 22px; text-align: left; font-size: 0.68rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); font-family: var(--mono); background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); }
+.data-table td { padding: 10px 22px; font-size: 0.82rem; color: var(--text); border-bottom: 1px solid rgba(184,216,232,0.06); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(184,216,232,0.04); }
+.bar-cell { display: flex; align-items: center; gap: 8px; }
+.bar-bg { flex: 1; height: 4px; background: rgba(184,216,232,0.1); border-radius: 2px; }
+.bar-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+.rank { color: var(--text-dim); font-family: var(--mono); font-size: 0.72rem; }
+.bottom-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+.feed-list { padding: 0; list-style: none; }
+.feed-item { display: flex; align-items: center; gap: 10px; padding: 9px 22px; border-bottom: 1px solid rgba(184,216,232,0.05); font-size: 0.78rem; animation: fadeSlide 0.4s ease-out; }
+@keyframes fadeSlide { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+.feed-item:last-child { border-bottom: none; }
+.feed-page { flex: 1; color: var(--accent); font-family: var(--mono); font-size: 0.72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.feed-time { color: var(--text-dim); font-family: var(--mono); font-size: 0.68rem; flex-shrink: 0; }
+.feed-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; box-shadow: 0 0 4px var(--green); }
+.donut-wrapper { position: relative; height: 160px; margin: 10px auto; }
+.donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+.donut-center-val { font-family: var(--mono); font-size: 1.4rem; font-weight: 700; }
+.donut-center-lbl { font-size: 0.65rem; color: var(--text-dim); margin-top: 2px; }
+.pie-legend { padding: 0 22px 14px; display: flex; flex-direction: column; gap: 6px; }
+.pie-row { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; }
+.pie-color { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.pie-name { flex: 1; color: var(--text-dim); }
+.pie-pct { font-family: var(--mono); font-size: 0.75rem; }
+.heatmap-grid { display: grid; grid-template-columns: 32px repeat(24, 1fr); gap: 2px; padding: 14px 22px 18px; font-size: 0.6rem; font-family: var(--mono); }
+.heatmap-header { color: var(--text-dim); text-align: center; }
+.heatmap-label { color: var(--text-dim); display: flex; align-items: center; padding-right: 4px; }
+.heatmap-cell { aspect-ratio: 1; border-radius: 2px; transition: transform 0.15s; cursor: pointer; position: relative; }
+.heatmap-cell:hover { transform: scale(1.3); z-index: 10; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.alert-banner { background: rgba(127,228,192,0.08); border: 1px solid rgba(127,228,192,0.25); border-radius: 8px; padding: 12px 18px; display: flex; align-items: center; gap: 10px; font-size: 0.82rem; color: var(--green); margin-bottom: 28px; }
+.loading-overlay { position: fixed; inset: 0; background: rgba(3,4,9,0.85); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; font-family: var(--mono); color: var(--accent); }
+.loading-spinner { width: 40px; height: 40px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.snippet-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 22px; }
+.snippet-box pre { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; font-family: var(--mono); font-size: 0.72rem; color: #e0e0e0; overflow-x: auto; line-height: 1.7; }
+.snippet-box pre .kw { color: var(--accent2); }
+.snippet-box pre .str { color: var(--green); }
+.snippet-box pre .cm { color: var(--text-dim); }
+.copy-btn { float: right; background: rgba(184,216,232,0.1); border: 1px solid var(--border); color: var(--accent); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-family: var(--mono); margin-bottom: 6px; transition: all 0.2s; }
+.copy-btn:hover { background: rgba(184,216,232,0.2); }
+.page-section { display: none; }
+.page-section.active { display: block; }
+@media (max-width: 1100px) { .charts-row { grid-template-columns: 1fr; } .bottom-row { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 800px) { aside { display: none; } main { max-width: 100vw; padding: 20px 16px; } .tables-row, .bottom-row { grid-template-columns: 1fr; } .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+
+<!-- Лоадер -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div>Загрузка данных из Firestore…</div>
+</div>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="logo">
+    <div class="logo-label">Analytics</div>
+    <div class="logo-title">digital-craft-tbilisi.site</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-label">Обзор</div>
+    <a class="nav-item active" href="#" onclick="return showPage('overview',this)">
+      <span class="icon">◈</span> Дашборд
+      <span class="status-dot"></span>
+    </a>
+    <a class="nav-item" href="#" onclick="return showPage('realtime',this)">
+      <span class="icon">◉</span> Реальное время
+    </a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-label">Аудитория</div>
+    <a class="nav-item" href="#" onclick="return showPage('audience',this)">
+      <span class="icon">◧</span> Пользователи
+    </a>
+    <a class="nav-item" href="#" onclick="return showPage('geo',this)">
+      <span class="icon">◎</span> География
+    </a>
+    <a class="nav-item" href="#" onclick="return showPage('devices',this)">
+      <span class="icon">▣</span> Устройства
+    </a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-label">Поведение</div>
+    <a class="nav-item" href="#" onclick="return showPage('pages',this)">
+      <span class="icon">▤</span> Страницы
+    </a>
+    <a class="nav-item" href="#" onclick="return showPage('events',this)">
+      <span class="icon">▦</span> События
+    </a>
+    <a class="nav-item" href="#" onclick="return showPage('funnels',this)">
+      <span class="icon">▽</span> Воронки
+    </a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-label">Трафик</div>
+    <a class="nav-item" href="#" onclick="return showPage('sources',this)">
+      <span class="icon">◈</span> Источники
+    </a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-label">Интеграция</div>
+    <a class="nav-item" href="#" onclick="return showPage('install',this)">
+      <span class="icon">⟨/⟩</span> Установка
+    </a>
+  </div>
+  <div class="sidebar-footer">
+    <span class="online-count" id="online-count">—</span>
+    сессий за последний час
+    <div style="margin-top:8px; font-size:0.68rem; color:var(--text-dim)">Источник: Firestore</div>
+    <div style="margin-top:4px; font-size:0.68rem; color:var(--text-dim)" id="last-updated">—</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main>
+
+<!-- OVERVIEW -->
+<div class="page-section active" id="page-overview">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Дашборд <span>— Обзор</span></div>
+      <div style="font-size:0.75rem;color:var(--text-dim);margin-top:3px" id="date-range-label">—</div>
+    </div>
+    <div class="header-controls">
+      <button class="range-btn active" onclick="setRange(7,this)">7д</button>
+      <button class="range-btn" onclick="setRange(30,this)">30д</button>
+      <button class="range-btn" onclick="setRange(90,this)">90д</button>
+      <button class="export-btn" onclick="exportCSV()">↓ CSV</button>
+    </div>
+  </div>
+  <div class="alert-banner" id="tracking-status" style="display:none">
+    ✦ Трекинг активен — данные собираются из всех посетителей в реальном времени через Firestore
+  </div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div class="section-title">Динамика посещений</div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div><div class="chart-card-title">Сессии и просмотры страниц</div><div class="chart-card-sub">По дням</div></div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Сессии</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Просмотры</div>
+        </div>
+      </div>
+      <div class="chart-wrapper"><canvas id="mainChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header"><div><div class="chart-card-title">Тип пользователей</div><div class="chart-card-sub">Новые vs Вернувшиеся</div></div></div>
+      <div class="donut-wrapper" style="max-width:200px;margin:0 auto">
+        <canvas id="userTypeChart"></canvas>
+        <div class="donut-center"><div class="donut-center-val" id="donut-total">—</div><div class="donut-center-lbl">всего</div></div>
+      </div>
+      <div class="pie-legend" id="user-type-legend"></div>
+    </div>
+  </div>
+  <div class="section-title">Топ страниц и источники</div>
+  <div class="tables-row">
+    <div class="table-card">
+      <div class="table-card-header">Популярные страницы</div>
+      <table class="data-table" id="pages-table">
+        <thead><tr><th>#</th><th>Страница</th><th>Просмотры</th><th>Доля</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="table-card">
+      <div class="table-card-header">Источники трафика</div>
+      <table class="data-table" id="sources-table">
+        <thead><tr><th>#</th><th>Источник</th><th>Сессий</th><th>Доля</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="section-title">Устройства, браузеры, события</div>
+  <div class="bottom-row">
+    <div class="table-card">
+      <div class="table-card-header">Устройства</div>
+      <div class="donut-wrapper" style="max-width:160px;margin:10px auto 0"><canvas id="deviceChart"></canvas></div>
+      <div class="pie-legend" id="device-legend"></div>
+    </div>
+    <div class="table-card">
+      <div class="table-card-header">Браузеры</div>
+      <table class="data-table" id="browser-table">
+        <thead><tr><th>Браузер</th><th>Сессий</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="table-card">
+      <div class="table-card-header">Последние события</div>
+      <ul class="feed-list" id="events-feed"></ul>
+    </div>
+  </div>
+  <div class="section-title">Тепловая карта активности</div>
+  <div class="chart-card">
+    <div class="chart-card-header"><div><div class="chart-card-title">Активность по часам и дням недели</div><div class="chart-card-sub">Цвет = количество сессий</div></div></div>
+    <div class="heatmap-grid" id="heatmap-grid"></div>
+    <div style="display:flex;align-items:center;gap:6px;padding:0 22px 16px;font-size:0.68rem;color:var(--text-dim)">
+      Менее
+      <div style="display:flex;gap:2px">
+        <div style="width:12px;height:12px;border-radius:2px;background:rgba(184,216,232,0.05)"></div>
+        <div style="width:12px;height:12px;border-radius:2px;background:rgba(184,216,232,0.2)"></div>
+        <div style="width:12px;height:12px;border-radius:2px;background:rgba(184,216,232,0.45)"></div>
+        <div style="width:12px;height:12px;border-radius:2px;background:rgba(184,216,232,0.7)"></div>
+        <div style="width:12px;height:12px;border-radius:2px;background:rgba(184,216,232,1)"></div>
+      </div>
+      Больше
+    </div>
+  </div>
+</div>
+
+<!-- REALTIME -->
+<div class="page-section" id="page-realtime">
+  <div class="page-header"><div class="page-title">Реальное время</div></div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-card-header"><div><div class="chart-card-title">Сессии за последние 30 минут</div></div></div>
+      <div class="chart-wrapper"><canvas id="realtimeChart"></canvas></div>
+    </div>
+    <div class="table-card">
+      <div class="table-card-header">Активные страницы (последний час)</div>
+      <table class="data-table" id="rt-pages-table">
+        <thead><tr><th>Страница</th><th>Просмотры</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="section-title">Последние просмотры</div>
+  <div class="table-card">
+    <div class="table-card-header">Живой поток</div>
+    <ul class="feed-list" id="realtime-feed"></ul>
+  </div>
+</div>
+
+<!-- AUDIENCE -->
+<div class="page-section" id="page-audience">
+  <div class="page-header"><div class="page-title">Аудитория</div></div>
+  <div class="kpi-grid" id="audience-kpi"></div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-card-header"><div><div class="chart-card-title">Вернувшиеся пользователи по дням</div></div></div>
+      <div class="chart-wrapper"><canvas id="retentionChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header"><div><div class="chart-card-title">Глубина просмотра (стр./сессия)</div></div></div>
+      <div class="chart-wrapper"><canvas id="depthChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- GEO -->
+<div class="page-section" id="page-geo">
+  <div class="page-header"><div class="page-title">География</div></div>
+  <div class="table-card">
+    <div class="table-card-header">Часовые пояса посетителей</div>
+    <table class="data-table" id="geo-table">
+      <thead><tr><th>#</th><th>Часовой пояс</th><th>Сессии</th><th>Доля</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- DEVICES -->
+<div class="page-section" id="page-devices">
+  <div class="page-header"><div class="page-title">Устройства и браузеры</div></div>
+  <div class="tables-row">
+    <div class="table-card">
+      <div class="table-card-header">Устройства</div>
+      <table class="data-table" id="devices-full-table">
+        <thead><tr><th>Тип</th><th>Сессии</th><th>Доля</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="table-card">
+      <div class="table-card-header">ОС</div>
+      <table class="data-table" id="os-table">
+        <thead><tr><th>ОС</th><th>Сессии</th><th>Доля</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PAGES -->
+<div class="page-section" id="page-pages">
+  <div class="page-header"><div class="page-title">Страницы</div></div>
+  <div class="table-card">
+    <div class="table-card-header">Все страницы</div>
+    <table class="data-table" id="all-pages-table">
+      <thead><tr><th>#</th><th>URL</th><th>Просмотры</th><th>Уникальные сессии</th><th>Доля</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- EVENTS -->
+<div class="page-section" id="page-events">
+  <div class="page-header"><div class="page-title">События</div></div>
+  <div class="table-card">
+    <div class="table-card-header">Все события</div>
+    <table class="data-table" id="all-events-table">
+      <thead><tr><th>Событие</th><th>Кол-во</th><th>Страница</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FUNNELS -->
+<div class="page-section" id="page-funnels">
+  <div class="page-header"><div class="page-title">Воронки</div></div>
+  <div class="chart-card">
+    <div class="chart-card-header"><div><div class="chart-card-title">Воронка конверсии</div></div></div>
+    <div class="chart-wrapper" style="height:300px"><canvas id="funnelChart"></canvas></div>
+  </div>
+</div>
+
+<!-- SOURCES -->
+<div class="page-section" id="page-sources">
+  <div class="page-header"><div class="page-title">Источники трафика</div></div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-card-header"><div><div class="chart-card-title">Каналы трафика</div></div></div>
+      <div class="chart-wrapper"><canvas id="sourcesChart"></canvas></div>
+    </div>
+    <div class="table-card">
+      <div class="table-card-header">Referrers</div>
+      <table class="data-table" id="ref-table">
+        <thead><tr><th>URL</th><th>Сессии</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- INSTALL -->
+<div class="page-section" id="page-install">
+  <div class="page-header"><div class="page-title">Установка трекера</div></div>
+  <div class="snippet-box">
+    <div class="chart-card-title" style="margin-bottom:16px">Трекер уже подключён через <code style="color:var(--accent)">/dc-tracker.js</code> — данные пишутся в Firestore от всех посетителей</div>
+    <div style="font-size:0.82rem;color:var(--text-dim);line-height:1.8;margin-top:12px">
+      <strong style="color:var(--text)">Коллекции Firestore:</strong><br>
+      • <code style="color:var(--accent)">analytics_sessions</code> — одна запись на сессию (устройство, браузер, ОС, источник, isNew)<br>
+      • <code style="color:var(--accent)">analytics_pageviews</code> — одна запись на просмотр страницы<br>
+      • <code style="color:var(--accent)">analytics_events</code> — кастомные события через <code style="color:var(--green)">dcTrack('name', props)</code>
+    </div>
+  </div>
+  <div class="snippet-box" style="margin-top:16px">
+    <div class="chart-card-title" style="margin-bottom:12px">Кастомные события — вызывайте в любом месте сайта:</div>
+    <pre><span class="cm">// Клик по кнопке контакта</span>
+<span class="kw">dcTrack</span>(<span class="str">'click'</span>, { label: <span class="str">'contact_button'</span> });
+
+<span class="cm">// Просмотр проекта</span>
+<span class="kw">dcTrack</span>(<span class="str">'view_project'</span>, { slug: <span class="str">'my-project'</span> });
+
+<span class="cm">// Форма отправлена</span>
+<span class="kw">dcTrack</span>(<span class="str">'form_submit'</span>, { form: <span class="str">'contact'</span> });</pre>
+  </div>
+  <div class="snippet-box" style="margin-top:16px">
+    <div class="chart-card-title" style="margin-bottom:12px">Firestore Security Rules — добавьте в консоли Firebase:</div>
+    <pre><span class="cm">// Firestore Rules — разрешить только запись в аналитические коллекции</span>
+<span class="kw">rules_version</span> = <span class="str">'2'</span>;
+<span class="kw">service</span> cloud.firestore {
+  match /databases/{database}/documents {
+    <span class="cm">// Аналитика: только добавление новых документов (не чтение/удаление)</span>
+    match /analytics_sessions/{doc} {
+      allow create: <span class="kw">if true</span>;
+      allow read, update, delete: <span class="kw">if false</span>;
+    }
+    match /analytics_pageviews/{doc} {
+      allow create: <span class="kw">if true</span>;
+      allow read, update, delete: <span class="kw">if false</span>;
+    }
+    match /analytics_events/{doc} {
+      allow create: <span class="kw">if true</span>;
+      allow read, update, delete: <span class="kw">if false</span>;
+    }
+    <span class="cm">// Остальные коллекции — ваши текущие правила</span>
+    match /{document=**} {
+      allow read, write: <span class="kw">if false</span>;
+    }
+  }
+}</pre>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  КОНФИГУРАЦИЯ FIRESTORE
+// ═══════════════════════════════════════════════════════════
+const PROJECT_ID = 'razrabotka-b61bc';
+const API_KEY    = 'AIzaSyAT4dDEIDUtzP60ibjahO06P75Q6h95ZN4';
+const FS_BASE    = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
+
+// ═══════════════════════════════════════════════════════════
+//  FIRESTORE REST: ЧИТАЕМ КОЛЛЕКЦИЮ
+//  Firestore REST не поддерживает фильтрацию по времени без индексов,
+//  поэтому читаем последние N документов (pageSize) и фильтруем в JS.
+//  pageSize=2000 покрывает сайт с ~50-100 визитами в день за 90 дней.
+// ═══════════════════════════════════════════════════════════
+async function fsQuery(collection, pageSize = 2000) {
+  const url = `${FS_BASE}/${collection}?key=${API_KEY}&pageSize=${pageSize}&orderBy=ts%20desc`;
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (!data.documents) return [];
+    return data.documents.map(doc => fsDocToObj(doc));
+  } catch(e) {
+    console.error(`fsQuery(${collection}) error:`, e);
+    return [];
+  }
+}
+
+// Конвертируем Firestore document → plain object
+function fsDocToObj(doc) {
+  const obj = {};
+  if (!doc.fields) return obj;
+  for (const [k, v] of Object.entries(doc.fields)) {
+    if (v.stringValue  !== undefined) obj[k] = v.stringValue;
+    else if (v.integerValue !== undefined) obj[k] = parseInt(v.integerValue, 10);
+    else if (v.doubleValue  !== undefined) obj[k] = v.doubleValue;
+    else if (v.booleanValue !== undefined) obj[k] = v.booleanValue;
+    else obj[k] = null;
+  }
+  return obj;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ГЛОБАЛЬНОЕ ХРАНИЛИЩЕ ДАННЫХ
+// ═══════════════════════════════════════════════════════════
+let STORE = { sessions: [], pageviews: [], events: [] };
+let currentDays = 7;
+let isLoading = false;
+
+async function loadAllData() {
+  if (isLoading) return;
+  isLoading = true;
+  showLoader(true);
+  try {
+    const [sessions, pageviews, events] = await Promise.all([
+      fsQuery('analytics_sessions', 3000),
+      fsQuery('analytics_pageviews', 5000),
+      fsQuery('analytics_events',    2000),
+    ]);
+    STORE.sessions  = sessions;
+    STORE.pageviews = pageviews;
+    STORE.events    = events;
+
+    const now = new Date().toLocaleTimeString('ru', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    const el = document.getElementById('last-updated');
+    if (el) el.textContent = `Обновлено: ${now}`;
+
+    // Кол-во сессий за последний час в сайдбаре
+    const hourAgo = Date.now() - 3600000;
+    const recentSess = sessions.filter(s => s.ts > hourAgo).length;
+    document.getElementById('online-count').textContent = recentSess;
+
+  } catch(e) {
+    console.error('loadAllData error:', e);
+  } finally {
+    isLoading = false;
+    showLoader(false);
+    document.getElementById('tracking-status').style.display = 'flex';
+  }
+}
+
+function showLoader(show) {
+  const el = document.getElementById('loading-overlay');
+  if (el) el.style.display = show ? 'flex' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DATA ACCESS LAYER
+// ═══════════════════════════════════════════════════════════
+function filterByDays(arr, days) {
+  const cutoff = Date.now() - days * 86400000;
+  return arr.filter(x => x.ts >= cutoff);
+}
+
+function getAnalytics(days) {
+  return {
+    sessions:  filterByDays(STORE.sessions,  days),
+    pageviews: filterByDays(STORE.pageviews, days),
+    events:    filterByDays(STORE.events,    days),
+  };
+}
+
+function groupByDay(arr, days) {
+  const result = {};
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000);
+    result[d.toLocaleDateString('ru', { month:'short', day:'numeric' })] = 0;
+  }
+  arr.forEach(x => {
+    const d = new Date(x.ts).toLocaleDateString('ru', { month:'short', day:'numeric' });
+    if (result[d] !== undefined) result[d]++;
+  });
+  return result;
+}
+
+function avgSessionDuration(sessions, pageviews) {
+  const m = {};
+  pageviews.forEach(p => { if (!m[p.sid]) m[p.sid] = []; m[p.sid].push(p.ts); });
+  let total = 0, cnt = 0;
+  Object.values(m).forEach(ts => { if (ts.length > 1) { total += Math.max(...ts) - Math.min(...ts); cnt++; } });
+  return cnt > 0 ? Math.round(total / cnt / 1000) : 0;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ФОРМАТИРОВАНИЕ
+// ═══════════════════════════════════════════════════════════
+function fmtDuration(s) { if (s < 60) return s + 'с'; return Math.floor(s/60) + 'м ' + (s%60) + 'с'; }
+function fmtNum(n) { return Number(n).toLocaleString('ru'); }
+function pct(a, b) { return b > 0 ? Math.round(a/b*100) + '%' : '0%'; }
+
+// ═══════════════════════════════════════════════════════════
+//  CHART.JS
+// ═══════════════════════════════════════════════════════════
+const charts = {};
+Chart.defaults.color = 'rgba(255,255,255,0.7)';
+Chart.defaults.borderColor = 'rgba(184,216,232,0.3)';
+Chart.defaults.font = { family: "'Inter', sans-serif", size: 11 };
+
+function makeChart(id, config) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, config);
+  return charts[id];
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER: OVERVIEW
+// ═══════════════════════════════════════════════════════════
+function renderKPIs(days) {
+  const { sessions, pageviews, events } = getAnalytics(days);
+  const prevSessions = STORE.sessions.filter(x => {
+    const cutoff = Date.now() - days * 86400000;
+    const prevCutoff = cutoff - days * 86400000;
+    return x.ts >= prevCutoff && x.ts < cutoff;
+  });
+
+  const totalSessions = sessions.length;
+  const prevTotal = prevSessions.length;
+  const delta = prevTotal > 0 ? Math.round((totalSessions - prevTotal) / prevTotal * 100) : 0;
+
+  const uniqueUsers = new Set(sessions.map(s => s.id)).size;
+  const totalPV = pageviews.length;
+  const bounced = Object.values(pageviews.reduce((m,p) => { m[p.sid]=(m[p.sid]||0)+1; return m; }, {})).filter(c => c===1).length;
+  const bounceRate = totalSessions > 0 ? Math.round(bounced / totalSessions * 100) : 0;
+  const avgDur = avgSessionDuration(sessions, pageviews);
+  const pagesPerSession = totalSessions > 0 ? (totalPV / totalSessions).toFixed(1) : '0';
+  const newUsers = sessions.filter(s => s.isNew).length;
+
+  const kpis = [
+    { label:'Сессии',     value:fmtNum(totalSessions), delta, icon:'◈', up: delta>=0 },
+    { label:'Просмотры',  value:fmtNum(totalPV),        delta: null, icon:'▤' },
+    { label:'Пользов.',   value:fmtNum(uniqueUsers),    delta: null, icon:'◧' },
+    { label:'Новые',      value:fmtNum(newUsers),       delta: null, icon:'✦' },
+    { label:'Отказы',     value:bounceRate+'%',         delta: null, icon:'▽' },
+    { label:'Ср. длит.',  value:fmtDuration(avgDur),   delta: null, icon:'◉' },
+    { label:'Стр./сессия',value:pagesPerSession,        delta: null, icon:'▣' },
+    { label:'События',    value:fmtNum(events.length),  delta: null, icon:'▦' },
+  ];
+
+  const grid = document.getElementById('kpi-grid');
+  if (!grid) return;
+  grid.innerHTML = kpis.map(k => `
+    <div class="kpi-card">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      ${k.delta !== null
+        ? `<div class="kpi-delta ${k.up?'up':'down'}">${k.up?'↑':'↓'} ${Math.abs(k.delta)}% vs пред. период</div>`
+        : '<div class="kpi-delta" style="color:transparent">—</div>'}
+    </div>`).join('');
+}
+
+function renderMainChart(days) {
+  const { sessions, pageviews } = getAnalytics(days);
+  const sg = groupByDay(sessions, days);
+  const pg = groupByDay(pageviews, days);
+  const labels = Object.keys(sg);
+  makeChart('mainChart', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'Сессии',   data:Object.values(sg), borderColor:'#b8d8e8', backgroundColor:'rgba(184,216,232,0.08)', borderWidth:2, pointRadius:3, tension:0.4, fill:true },
+        { label:'Просмотры',data:Object.values(pg), borderColor:'#82a0ff', backgroundColor:'rgba(130,160,255,0.05)', borderWidth:2, pointRadius:3, tension:0.4, fill:true }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'rgba(10,13,24,0.95)', borderColor:'rgba(184,216,232,0.3)', borderWidth:1, padding:12 } },
+      scales:{ x:{ grid:{color:'rgba(184,216,232,0.05)'}, ticks:{maxTicksLimit:days<=30?10:15,maxRotation:0} }, y:{ grid:{color:'rgba(184,216,232,0.05)'}, beginAtZero:true } }
+    }
+  });
+}
+
+function renderUserTypeChart(days) {
+  const { sessions } = getAnalytics(days);
+  const newC = sessions.filter(s => s.isNew).length;
+  const retC = sessions.length - newC;
+  const total = sessions.length;
+  document.getElementById('donut-total').textContent = fmtNum(total);
+  makeChart('userTypeChart', {
+    type:'doughnut',
+    data:{ labels:['Новые','Вернувшиеся'], datasets:[{ data:[newC,retC], backgroundColor:['rgba(127,228,192,0.8)','rgba(184,216,232,0.6)'], borderColor:['#7fe4c0','#b8d8e8'], borderWidth:1, hoverOffset:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{ legend:{display:false} } }
+  });
+  const leg = document.getElementById('user-type-legend');
+  if (leg) leg.innerHTML = [
+    { name:'Новые', val:newC, color:'#7fe4c0' },
+    { name:'Вернувшиеся', val:retC, color:'#b8d8e8' }
+  ].map(x=>`<div class="pie-row"><div class="pie-color" style="background:${x.color}"></div><span class="pie-name">${x.name}</span><span class="pie-pct">${fmtNum(x.val)} (${pct(x.val,total)})</span></div>`).join('');
+}
+
+function renderTable(tbodySel, rows) {
+  const tb = document.querySelector(tbodySel + ' tbody');
+  if (!tb) return;
+  tb.innerHTML = rows.join('');
+}
+
+function renderPagesTable(days) {
+  const { pageviews } = getAnalytics(days);
+  const m = {};
+  pageviews.forEach(p => { m[p.url]=(m[p.url]||0)+1; });
+  const sorted = Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const total = pageviews.length;
+  renderTable('#pages-table', sorted.map(([url,cnt],i)=>`
+    <tr>
+      <td class="rank">${i+1}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${url}">${url}</td>
+      <td style="font-family:var(--mono)">${fmtNum(cnt)}</td>
+      <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${pct(cnt,sorted[0]?.[1]||1)}"></div></div>${pct(cnt,total)}</div></td>
+    </tr>`));
+}
+
+function renderSourcesTable(days) {
+  const { sessions } = getAnalytics(days);
+  const m = {};
+  sessions.forEach(s => { m[s.src]=(m[s.src]||0)+1; });
+  const sorted = Object.entries(m).sort((a,b)=>b[1]-a[1]);
+  const total = sessions.length;
+  const labels = { direct:'Прямой', organic:'Поиск', referral:'Реферал', social:'Соцсети' };
+  renderTable('#sources-table', sorted.map(([src,cnt],i)=>`
+    <tr>
+      <td class="rank">${i+1}</td>
+      <td>${labels[src]||src}</td>
+      <td style="font-family:var(--mono)">${fmtNum(cnt)}</td>
+      <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${pct(cnt,sorted[0]?.[1]||1)};background:var(--accent2)"></div></div>${pct(cnt,total)}</div></td>
+    </tr>`));
+}
+
+function renderDeviceChart(days) {
+  const { sessions } = getAnalytics(days);
+  const m = {};
+  sessions.forEach(s => { m[s.dev]=(m[s.dev]||0)+1; });
+  const sorted = Object.entries(m).sort((a,b)=>b[1]-a[1]);
+  const colors = { desktop:'#b8d8e8', mobile:'#82a0ff', tablet:'#7fe4c0' };
+  const labels_ = { desktop:'Desktop', mobile:'Mobile', tablet:'Tablet' };
+  const total = sessions.length;
+  makeChart('deviceChart', {
+    type:'doughnut',
+    data:{ labels:sorted.map(([k])=>labels_[k]||k), datasets:[{ data:sorted.map(([,v])=>v), backgroundColor:sorted.map(([k])=>colors[k]||'#888'), borderWidth:1, hoverOffset:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'55%', plugins:{ legend:{display:false} } }
+  });
+  const leg = document.getElementById('device-legend');
+  if (leg) leg.innerHTML = sorted.map(([k,v])=>`<div class="pie-row"><div class="pie-color" style="background:${colors[k]||'#888'}"></div><span class="pie-name">${labels_[k]||k}</span><span class="pie-pct">${pct(v,total)}</span></div>`).join('');
+}
+
+function renderBrowserTable(days) {
+  const { sessions } = getAnalytics(days);
+  const m = {};
+  sessions.forEach(s => { m[s.br]=(m[s.br]||0)+1; });
+  const sorted = Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  renderTable('#browser-table', sorted.map(([br,cnt])=>`<tr><td>${br}</td><td style="font-family:var(--mono)">${fmtNum(cnt)}</td></tr>`));
+}
+
+function renderEventsFeed(days) {
+  const { events } = getAnalytics(days);
+  const feed = document.getElementById('events-feed');
+  if (!feed) return;
+  const recent = [...events].sort((a,b)=>b.ts-a.ts).slice(0,8);
+  feed.innerHTML = recent.map(e=>`
+    <li class="feed-item">
+      <div class="feed-dot"></div>
+      <div class="feed-page">${e.name}</div>
+      <div style="font-size:0.72rem;color:var(--text-dim)">${e.url||''}</div>
+      <div class="feed-time">${new Date(e.ts).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})}</div>
+    </li>`).join('') || '<li style="padding:16px 22px;color:var(--text-dim);font-size:0.8rem">Событий нет</li>';
+}
+
+function renderHeatmap(days) {
+  const { sessions } = getAnalytics(days);
+  const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const grid = document.getElementById('heatmap-grid');
+  if (!grid) return;
+  const heat = {};
+  sessions.forEach(s => {
+    const d = new Date(s.ts);
+    const key = `${d.getDay()}_${d.getHours()}`;
+    heat[key] = (heat[key]||0)+1;
+  });
+  const maxVal = Math.max(1, ...Object.values(heat));
+  let html = '<div class="heatmap-header"></div>';
+  for (let h=0; h<24; h++) html += `<div class="heatmap-header">${h}</div>`;
+  for (let day=0; day<7; day++) {
+    html += `<div class="heatmap-label">${dayNames[day]}</div>`;
+    for (let h=0; h<24; h++) {
+      const v = heat[`${day}_${h}`]||0;
+      const intensity = v / maxVal;
+      html += `<div class="heatmap-cell" style="background:rgba(184,216,232,${0.04+intensity*0.96})" title="${dayNames[day]} ${h}:00 — ${v} сессий"></div>`;
+    }
+  }
+  grid.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER: AUDIENCE
+// ═══════════════════════════════════════════════════════════
+function renderAudiencePage() {
+  const { sessions, pageviews } = getAnalytics(currentDays);
+  const newUsers = sessions.filter(s=>s.isNew).length;
+  const retUsers = sessions.length - newUsers;
+  const avgDur = avgSessionDuration(sessions, pageviews);
+  const pvBySid = {};
+  pageviews.forEach(p=>{ pvBySid[p.sid]=(pvBySid[p.sid]||0)+1; });
+  const avgDepth = sessions.length > 0 ? (pageviews.length / sessions.length).toFixed(1) : 0;
+
+  const g = document.getElementById('audience-kpi');
+  if (g) g.innerHTML = [
+    { icon:'✦', label:'Новые пользователи', value:fmtNum(newUsers) },
+    { icon:'◈', label:'Вернувшиеся',        value:fmtNum(retUsers) },
+    { icon:'◉', label:'Ср. длительность',   value:fmtDuration(avgDur) },
+    { icon:'▣', label:'Стр./сессия',        value:avgDepth },
+  ].map(k=>`<div class="kpi-card"><div class="kpi-icon">${k.icon}</div><div class="kpi-label">${k.label}</div><div class="kpi-value">${k.value}</div></div>`).join('');
+
+  const sg = groupByDay(sessions.filter(s=>!s.isNew), currentDays);
+  makeChart('retentionChart',{
+    type:'bar',
+    data:{ labels:Object.keys(sg), datasets:[{ label:'Вернувшиеся', data:Object.values(sg), backgroundColor:'rgba(130,160,255,0.5)', borderColor:'#82a0ff', borderWidth:1 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(184,216,232,0.05)'},ticks:{maxTicksLimit:10}}, y:{grid:{color:'rgba(184,216,232,0.05)'},beginAtZero:true} } }
+  });
+
+  const depth = {};
+  Object.values(pvBySid).forEach(c=>{ const b=c>=5?'5+':String(c); depth[b]=(depth[b]||0)+1; });
+  const depthLabels = ['1','2','3','4','5+'];
+  makeChart('depthChart',{
+    type:'bar',
+    data:{ labels:depthLabels, datasets:[{ label:'Сессии', data:depthLabels.map(l=>depth[l]||0), backgroundColor:'rgba(184,216,232,0.4)', borderColor:'#b8d8e8', borderWidth:1 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(184,216,232,0.05)'}}, y:{grid:{color:'rgba(184,216,232,0.05)'},beginAtZero:true} } }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER: GEO (по часовым поясам из поля tz)
+// ═══════════════════════════════════════════════════════════
+function renderGeoPage() {
+  const { sessions } = getAnalytics(currentDays);
+  const m = {};
+  sessions.forEach(s => { const tz=s.tz||'unknown'; m[tz]=(m[tz]||0)+1; });
+  const sorted = Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  const total = sessions.length;
+  const tb = document.querySelector('#geo-table tbody');
+  if (tb) tb.innerHTML = sorted.map(([tz,cnt],i)=>`
+    <tr>
+      <td class="rank">${i+1}</td>
+      <td>${tz}</td>
+      <td style="font-family:var(--mono)">${fmtNum(cnt)}</td>
+      <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${pct(cnt,sorted[0]?.[1]||1)}"></div></div>${pct(cnt,total)}</div></td>
+    </tr>`).join('') || '<tr><td colspan="4" style="padding:16px 22px;color:var(--text-dim)">Нет данных</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER: DEVICES
+// ═══════════════════════════════════════════════════════════
+function renderDevicesPage() {
+  const { sessions } = getAnalytics(currentDays);
+  const devM={}, osM={};
+  sessions.forEach(s=>{ devM[s.dev]=(devM[s.dev]||0)+1; osM[s.os]=(osM[s.os]||0)+1; });
+  const total = sessions.length;
+  const devLabels = { desktop:'Desktop', mobile:'Mobile', tablet:'Tablet' };
+  document.querySelector('#devices-full-table tbody').innerHTML = Object.entries(devM).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${devLabels[k]||k}</td><td style="font-family:var(--mono)">${fmtNum(v)}</td><td>${pct(v,total)}</td></tr>`).join('') || '<tr><td colspan="3" style="padding:14px 22px;color:var(--text-dim)">Нет данных</td></tr>';
+  document.querySelector('#os-table tbody').innerHTML = Object.entries(osM).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td style="font-family:var(--mono)">${fmtNum(v)}</td><td>${pct(v,total)}</td></tr>`).join('') || '<tr><td colspan="3" style="padding:14px 22px;color:var(--text-dim)">Нет данных</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER: PAGES
+// ═══════════════════════════════════════════════════════════
+function renderPagesPage() {
+  const { pageviews } = getAnalytics(currentDays);
+  const m={}, u={};
+  pageviews.forEach(p=>{ m[p.url]=(m[p.url]||0)+1; if(!u[p.url]) u[p.url]=new Set(); u[p.url].add(p.sid); });
+  const sorted = Object.entries(m).sort((a,b)=>b[1]-a[1]);
+  const total = pageviews.length;
+  document.querySelector('#all-pages-table tbody').innerHTML = sorted.map(([url,cnt],i)=>`
+    <tr>
+      <td class="rank">${i+1}</td>
+      <td style="font-family:var(--mono);font-size:0.75rem">${url}</td>
+      <td style="font-family:var(--mono)">${fmtNum(cnt)}</td>
+      <td style="font-family:var(--mono)">${fmtNum(u[url].size)}</td>
+      <td>${pct(cnt,total)}</td>
+    </tr>`).join('') || '<tr><td colspan="5" style="padding:14px 22px;color:var(--text-dim)">Нет данных</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER: EVENTS
+// ═══════════════════════════════════════════════════════════
+function renderEventsPage() {
+  const { events } = getAnalytics(currentDays);
+  const m={}, pages={};
+  events.forEach(e=>{ m[e.name]=(m[e.name]||0)+1; if(!pages[e.name]) pages[e.name]=e.url; });
+  document.querySelector('#all-events-table tbody').innerHTML = Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([name,cnt])=>`<tr><td>${name}</td><td style="font-family:var(--mono)">${fmtNum(cnt)}</td><td style="font-family:var(--mono);font-size:0.75rem;color:var(--accent)">${pages[name]||''}</td></tr>`).join('') || '<tr><td colspan="3" style="padding:14px 22px;color:var(--text-dim)">Событий нет</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER: FUNNELS
+// ═══════════════════════════════════════════════════════════
+function renderFunnelsPage() {
+  const { sessions, pageviews } = getAnalytics(currentDays);
+  const urlCount = url => pageviews.filter(p=>p.url===url||p.url.startsWith(url)).length;
+  const steps = ['Главная (/)', '/services', '/portfolio', '/contact'];
+  const vals = [sessions.length, urlCount('/services'), urlCount('/portfolio'), urlCount('/contact')];
+  makeChart('funnelChart',{
+    type:'bar',
+    data:{ labels:steps, datasets:[{ data:vals, backgroundColor:['rgba(184,216,232,0.7)','rgba(130,160,255,0.6)','rgba(127,228,192,0.5)','rgba(255,107,122,0.5)'], borderWidth:0, borderRadius:4 }] },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:(ctx)=>`${fmtNum(ctx.raw)} (${pct(ctx.raw,vals[0]||1)})`}}},
+      scales:{ x:{grid:{color:'rgba(184,216,232,0.05)'},beginAtZero:true}, y:{grid:{display:false}} }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER: SOURCES
+// ═══════════════════════════════════════════════════════════
+function renderSourcesPage() {
+  const { sessions } = getAnalytics(currentDays);
+  const m={};
+  sessions.forEach(s=>{ m[s.src]=(m[s.src]||0)+1; });
+  const labels_ = { direct:'Прямой', organic:'Поиск', referral:'Реферал', social:'Соцсети' };
+  const sorted = Object.entries(m).sort((a,b)=>b[1]-a[1]);
+  const colors = ['rgba(184,216,232,0.7)','rgba(130,160,255,0.7)','rgba(127,228,192,0.7)','rgba(255,180,100,0.7)'];
+  makeChart('sourcesChart',{
+    type:'bar',
+    data:{ labels:sorted.map(([k])=>labels_[k]||k), datasets:[{ data:sorted.map(([,v])=>v), backgroundColor:colors, borderWidth:0, borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(184,216,232,0.05)'}}, y:{grid:{color:'rgba(184,216,232,0.05)'},beginAtZero:true} } }
+  });
+
+  // Referrers
+  const refM={};
+  filterByDays(STORE.sessions, currentDays).filter(s=>s.src==='referral'&&s.ref).forEach(s=>{
+    try { const h=new URL(s.ref).hostname; refM[h]=(refM[h]||0)+1; } catch(e){}
+  });
+  document.querySelector('#ref-table tbody').innerHTML = Object.entries(refM).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([url,cnt])=>`<tr><td style="font-size:0.75rem;font-family:var(--mono)">${url}</td><td style="font-family:var(--mono)">${cnt}</td></tr>`).join('') || '<tr><td colspan="2" style="color:var(--text-dim);padding:14px 22px">Нет данных</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER: REALTIME
+// ═══════════════════════════════════════════════════════════
+let rtInterval;
+function renderRealtimePage() {
+  if (rtInterval) clearInterval(rtInterval);
+
+  // Последние 30 минут разбитые по минутам
+  const now = Date.now();
+  const labels = [];
+  const buckets = [];
+  for (let i=29; i>=0; i--) {
+    labels.push(i===0 ? 'сейчас' : `-${i}м`);
+    const from = now - (i+1)*60000;
+    const to   = now - i*60000;
+    buckets.push(STORE.pageviews.filter(p=>p.ts>=from&&p.ts<to).length);
+  }
+
+  makeChart('realtimeChart',{
+    type:'line',
+    data:{ labels, datasets:[{ data:buckets, borderColor:'#7fe4c0', backgroundColor:'rgba(127,228,192,0.08)', borderWidth:2, tension:0.4, fill:true, pointRadius:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, animation:{duration:300}, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(184,216,232,0.05)'},ticks:{maxTicksLimit:8}}, y:{grid:{color:'rgba(184,216,232,0.05)'},beginAtZero:true} } }
+  });
+
+  // Страницы за последний час
+  const hourAgo = now - 3600000;
+  const m={};
+  STORE.pageviews.filter(p=>p.ts>hourAgo).forEach(p=>{ m[p.url]=(m[p.url]||0)+1; });
+  document.querySelector('#rt-pages-table tbody').innerHTML = Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([url,cnt])=>`<tr><td style="font-family:var(--mono);font-size:0.75rem;color:var(--accent)">${url}</td><td style="font-family:var(--mono)">${cnt}</td></tr>`).join('') || '<tr><td colspan="2" style="color:var(--text-dim);padding:14px 22px">Нет активных</td></tr>';
+
+  // Последние просмотры
+  const feed = document.getElementById('realtime-feed');
+  if (feed) {
+    const recent = [...STORE.pageviews].sort((a,b)=>b.ts-a.ts).slice(0,12);
+    feed.innerHTML = recent.map(p=>`
+      <li class="feed-item">
+        <div class="feed-dot"></div>
+        <div class="feed-page">${p.url||'/'}</div>
+        <div style="font-size:0.72rem;color:var(--text-dim);flex-shrink:0">${p.title||''}</div>
+        <div class="feed-time">${new Date(p.ts).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})}</div>
+      </li>`).join('') || '<li style="padding:16px 22px;color:var(--text-dim)">Нет данных</li>';
+  }
+
+  // Обновляем каждые 60 сек
+  rtInterval = setInterval(async () => {
+    if (!document.getElementById('page-realtime').classList.contains('active')) {
+      clearInterval(rtInterval); return;
+    }
+    await loadAllData();
+    renderRealtimePage();
+  }, 60000);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EXPORT CSV
+// ═══════════════════════════════════════════════════════════
+function exportCSV() {
+  const { sessions, pageviews, events } = getAnalytics(currentDays);
+  let csv = 'type,timestamp,url,source,device,browser,os,isNew\n';
+  sessions.forEach(s => { csv+=`session,${new Date(s.ts).toISOString()},${s.startUrl||''},${s.src},${s.dev},${s.br},${s.os||''},${s.isNew}\n`; });
+  pageviews.forEach(p => { csv+=`pageview,${new Date(p.ts).toISOString()},${p.url},,,,,\n`; });
+  events.forEach(e => { csv+=`event,${new Date(e.ts).toISOString()},${e.url},,,,,${e.name}\n`; });
+  const blob = new Blob([csv], { type:'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `analytics_${currentDays}d.csv`;
+  a.click();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DATE RANGE LABEL
+// ═══════════════════════════════════════════════════════════
+function updateDateLabel(days) {
+  const el = document.getElementById('date-range-label');
+  if (!el) return;
+  const end   = new Date().toLocaleDateString('ru',{day:'numeric',month:'long'});
+  const start = new Date(Date.now()-days*86400000).toLocaleDateString('ru',{day:'numeric',month:'long'});
+  el.textContent = `${start} — ${end}`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RANGE SWITCHING
+// ═══════════════════════════════════════════════════════════
+function setRange(days, btn) {
+  currentDays = days;
+  document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  updateDateLabel(days);
+  renderOverviewPage();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function showPage(name, el) {
+  document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const page = document.getElementById('page-'+name);
+  if (page) page.classList.add('active');
+  if (el) el.classList.add('active');
+  if (rtInterval) { clearInterval(rtInterval); rtInterval=null; }
+
+  if      (name==='overview') renderOverviewPage();
+  else if (name==='realtime') renderRealtimePage();
+  else if (name==='audience') renderAudiencePage();
+  else if (name==='geo')      renderGeoPage();
+  else if (name==='devices')  renderDevicesPage();
+  else if (name==='pages')    renderPagesPage();
+  else if (name==='events')   renderEventsPage();
+  else if (name==='funnels')  renderFunnelsPage();
+  else if (name==='sources')  renderSourcesPage();
+  return false;
+}
+
+function renderOverviewPage() {
+  renderKPIs(currentDays);
+  renderMainChart(currentDays);
+  renderUserTypeChart(currentDays);
+  renderPagesTable(currentDays);
+  renderSourcesTable(currentDays);
+  renderDeviceChart(currentDays);
+  renderBrowserTable(currentDays);
+  renderEventsFeed(currentDays);
+  renderHeatmap(currentDays);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  updateDateLabel(currentDays);
+  await loadAllData();
+  renderOverviewPage();
+  document.getElementById('tracking-status').style.display = 'flex';
+
+  // Авто-обновление каждые 5 минут на дашборде
+  setInterval(async () => {
+    if (document.getElementById('page-overview').classList.contains('active')) {
+      await loadAllData();
+      renderOverviewPage();
+    }
+  }, 5 * 60 * 1000);
+});
+</script>
+</body>
+</html>
