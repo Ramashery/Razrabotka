@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DC Analytics — Диагностика</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: monospace; background: #0a0a0f; color: #cdd; padding: 20px; font-size: 13px; }
+  h1 { color: #7fe4c0; margin-bottom: 20px; font-size: 16px; }
+  .section { margin-bottom: 24px; border: 1px solid #1e2a2a; border-radius: 8px; overflow: hidden; }
+  .section-title { background: #111820; padding: 10px 14px; color: #7fe4c0; font-size: 12px; letter-spacing: .08em; }
+  .row { padding: 8px 14px; border-top: 1px solid #1a2020; display: flex; gap: 12px; align-items: flex-start; }
+  .badge { flex-shrink: 0; width: 70px; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; text-align: center; }
+  .badge.wait  { background:#2a2a10; color:#aaa; }
+  .badge.ok    { background:#0d2a1a; color:#4ecb8a; }
+  .badge.err   { background:#2a0d0d; color:#e05555; }
+  .badge.warn  { background:#2a1f0d; color:#e0a040; }
+  .msg { flex: 1; color: #bcc; line-height: 1.5; word-break: break-all; }
+  .msg pre { background:#0d1414; padding:8px; border-radius:4px; margin-top:6px; overflow:auto; max-height:160px; color:#7fe4c0; font-size:11px; }
+  button { margin-top: 16px; padding: 10px 24px; background: #0d2a1a; border: 1px solid #4ecb8a;
+           color: #4ecb8a; border-radius: 6px; cursor: pointer; font-family: monospace; font-size: 13px; }
+  button:hover { background: #1a3a2a; }
+  #run-btn { margin-right: 10px; }
+</style>
+</head>
+<body>
+<h1>⬡ DC Analytics — Диагностика системы</h1>
+
+<div class="section">
+  <div class="section-title">1. КОНФИГУРАЦИЯ ТРЕКЕРА</div>
+  <div class="row" id="r-config-pid"><span class="badge wait">...</span><span class="msg">PROJECT_ID</span></div>
+  <div class="row" id="r-config-key"><span class="badge wait">...</span><span class="msg">API_KEY</span></div>
+  <div class="row" id="r-config-geo"><span class="badge wait">...</span><span class="msg">GEO_ENDPOINT</span></div>
+  <div class="row" id="r-config-sess"><span class="badge wait">...</span><span class="msg">Сессия в sessionStorage</span></div>
+</div>
+
+<div class="section">
+  <div class="section-title">2. ЗАПИСЬ СЕССИИ В FIRESTORE (PATCH)</div>
+  <div class="row" id="r-sess-write"><span class="badge wait">...</span><span class="msg">Запись тестовой сессии...</span></div>
+  <div class="row" id="r-sess-read"><span class="badge wait">...</span><span class="msg">Чтение обратно из Firestore...</span></div>
+</div>
+
+<div class="section">
+  <div class="section-title">3. ГЕОЛОКАЦИЯ</div>
+  <div class="row" id="r-geo-backend"><span class="badge wait">...</span><span class="msg">Бэкенд Render (geo endpoint)...</span></div>
+  <div class="row" id="r-geo-ipapi"><span class="badge wait">...</span><span class="msg">Fallback ip-api.com...</span></div>
+  <div class="row" id="r-geo-patch"><span class="badge wait">...</span><span class="msg">Запись гео в сессию (PATCH с updateMask)...</span></div>
+  <div class="row" id="r-geo-verify"><span class="badge wait">...</span><span class="msg">Проверка — гео появилось в документе...</span></div>
+</div>
+
+<div class="section">
+  <div class="section-title">4. ЧТЕНИЕ ДАННЫХ (runQuery)</div>
+  <div class="row" id="r-query-sess"><span class="badge wait">...</span><span class="msg">analytics_sessions runQuery...</span></div>
+  <div class="row" id="r-query-geo"><span class="badge wait">...</span><span class="msg">Наличие country в последних сессиях...</span></div>
+</div>
+
+<div class="section">
+  <div class="section-title">5. ИТОГ</div>
+  <div class="row" id="r-summary"><span class="badge wait">...</span><span class="msg">Ожидание...</span></div>
+</div>
+
+<button id="run-btn" onclick="runDiag()">▶ Запустить диагностику</button>
+<button onclick="location.reload()">↺ Сбросить</button>
+
+<script>
+var PID = 'razrabotka-b61bc';
+var AK  = 'AIzaSyAT4dDEIDUtzP60ibjahO06P75Q6h95ZN4';
+var GEO = 'https://razrabotka-2.onrender.com/geo';
+var FS  = 'https://firestore.googleapis.com/v1/projects/' + PID + '/databases/(default)/documents';
+var TEST_SID = 'diag_' + Date.now();
+var errors = [];
+
+function setRow(id, status, msg, detail) {
+  var row = document.getElementById(id);
+  if (!row) return;
+  var badge = row.querySelector('.badge');
+  var msgEl = row.querySelector('.msg');
+  badge.className = 'badge ' + status;
+  badge.textContent = status === 'ok' ? 'OK' : status === 'err' ? 'ОШИБКА' : status === 'warn' ? 'WARN' : '...';
+  msgEl.innerHTML = msg + (detail ? '<pre>' + detail + '</pre>' : '');
+}
+
+function toFields(obj) {
+  var f = {};
+  Object.keys(obj).forEach(function(k) {
+    var v = obj[k];
+    if (v === null || v === undefined || v === '') return;
+    if (typeof v === 'boolean') f[k] = { booleanValue: v };
+    else if (typeof v === 'number') f[k] = { integerValue: String(Math.round(v)) };
+    else f[k] = { stringValue: String(v) };
+  });
+  return f;
+}
+
+function fsField(v) {
+  if (!v) return null;
+  if (v.stringValue !== undefined) return v.stringValue;
+  if (v.integerValue !== undefined) return parseInt(v.integerValue, 10);
+  if (v.booleanValue !== undefined) return v.booleanValue;
+  return null;
+}
+
+async function runDiag() {
+  document.getElementById('run-btn').disabled = true;
+  errors = [];
+
+  // ── 1. КОНФИГ ──
+  setRow('r-config-pid', 'ok', 'PROJECT_ID: ' + PID);
+  setRow('r-config-key', 'ok', 'API_KEY: ' + AK.slice(0,8) + '...');
+  setRow('r-config-geo', 'ok', 'GEO_ENDPOINT: ' + GEO);
+
+  var sess = null;
+  try {
+    var raw = sessionStorage.getItem('dc_sess_v3');
+    if (raw) {
+      sess = JSON.parse(raw);
+      var hasGeo = !!(sess.country);
+      setRow('r-config-sess', hasGeo ? 'ok' : 'warn',
+        'Сессия найдена: id=' + sess.id,
+        'country: ' + (sess.country || 'НЕТ') + '\ncity: ' + (sess.city || 'НЕТ') +
+        '\nbr: ' + sess.br + ' | os: ' + sess.os + ' | dev: ' + sess.dev);
+    } else {
+      setRow('r-config-sess', 'warn', 'Сессия в sessionStorage не найдена (нормально если первый заход)');
+    }
+  } catch(e) {
+    setRow('r-config-sess', 'err', 'Ошибка чтения sessionStorage: ' + e.message);
+  }
+
+  // ── 2. ЗАПИСЬ СЕССИИ ──
+  setRow('r-sess-write', 'wait', 'Записываем тестовую сессию ' + TEST_SID + '...');
+  var writeOk = false;
+  try {
+    var url = FS + '/analytics_sessions/' + TEST_SID + '?key=' + AK;
+    var body = JSON.stringify({ fields: toFields({
+      id: TEST_SID, ts: Date.now(), br: 'DiagTest', os: 'DiagOS',
+      dev: 'desktop', lang: 'ru', src: 'diag', isNew: true,
+      startUrl: '/dc-diag.html'
+    })});
+    var r = await fetch(url, { method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' }, body: body });
+    if (r.ok) {
+      writeOk = true;
+      setRow('r-sess-write', 'ok', 'PATCH analytics_sessions/' + TEST_SID + ' → ' + r.status);
+    } else {
+      var t = await r.text();
+      setRow('r-sess-write', 'err', 'PATCH вернул ' + r.status, t);
+      errors.push('Запись сессии: ' + r.status);
+    }
+  } catch(e) {
+    setRow('r-sess-write', 'err', 'Fetch ошибка: ' + e.message);
+    errors.push('Запись сессии: ' + e.message);
+  }
+
+  // ── ЧТЕНИЕ ОБРАТНО ──
+  if (writeOk) {
+    await new Promise(function(r){ setTimeout(r, 1000); });
+    try {
+      var r2 = await fetch(FS + '/analytics_sessions/' + TEST_SID + '?key=' + AK);
+      if (r2.ok) {
+        var d2 = await r2.json();
+        var br = fsField((d2.fields||{}).br);
+        setRow('r-sess-read', 'ok', 'Документ прочитан из Firestore', JSON.stringify(d2.fields, null, 2));
+      } else {
+        setRow('r-sess-read', 'err', 'Чтение вернуло ' + r2.status);
+        errors.push('Чтение сессии: ' + r2.status);
+      }
+    } catch(e) {
+      setRow('r-sess-read', 'err', 'Fetch ошибка: ' + e.message);
+    }
+  } else {
+    setRow('r-sess-read', 'warn', 'Пропущено — запись не удалась');
+  }
+
+  // ── 3. ГЕО — БЭКЕНД ──
+  setRow('r-geo-backend', 'wait', 'Запрос к Render бэкенду...');
+  var backendGeoOk = false;
+  try {
+    var ctrl = new AbortController();
+    var tid = setTimeout(function(){ ctrl.abort(); }, 11000);
+    var gb = await fetch(GEO + '?sid=' + TEST_SID, { signal: ctrl.signal });
+    clearTimeout(tid);
+    var gbText = await gb.text();
+    var gbJson = null;
+    try { gbJson = JSON.parse(gbText); } catch(e) {}
+    if (gbJson && gbJson.country) {
+      backendGeoOk = true;
+      setRow('r-geo-backend', 'ok', 'Бэкенд вернул гео: ' + gbJson.country + ' / ' + gbJson.city, gbText);
+    } else {
+      setRow('r-geo-backend', 'warn',
+        'Бэкенд вернул ' + gb.status + ' но не JSON с country (Render спит или ошибка). Идём в fallback.',
+        gbText.slice(0, 300));
+    }
+  } catch(e) {
+    setRow('r-geo-backend', 'warn', 'Бэкенд недоступен (' + e.message + '). Идём в fallback.');
+  }
+
+  // ── ГЕО — IP-API FALLBACK ──
+  setRow('r-geo-ipapi', 'wait', 'Запрос к ip-api.com...');
+  var geoData = null;
+  try {
+    var gi = await fetch('https://ip-api.com/json/?fields=status,country,regionName,city');
+    var giJson = await gi.json();
+    if (giJson && giJson.status === 'success' && giJson.country) {
+      geoData = giJson;
+      setRow('r-geo-ipapi', 'ok',
+        'ip-api.com вернул: ' + giJson.country + ' / ' + giJson.city,
+        JSON.stringify(giJson, null, 2));
+    } else {
+      setRow('r-geo-ipapi', 'err', 'ip-api.com вернул статус: ' + (giJson && giJson.status), JSON.stringify(giJson));
+      errors.push('ip-api.com: status=' + (giJson && giJson.status));
+    }
+  } catch(e) {
+    setRow('r-geo-ipapi', 'err', 'ip-api.com недоступен: ' + e.message);
+    errors.push('ip-api.com: ' + e.message);
+  }
+
+  // ── PATCH ГЕО В СЕССИЮ ──
+  if (geoData && writeOk) {
+    setRow('r-geo-patch', 'wait', 'Записываем гео в analytics_sessions/' + TEST_SID + '...');
+    try {
+      var geoFields = toFields({
+        country: geoData.country || '',
+        city:    geoData.city    || '',
+        region:  geoData.regionName || ''
+      });
+      var fieldPaths = Object.keys(geoFields).map(encodeURIComponent).join('&updateMask.fieldPaths=');
+      var patchUrl = FS + '/analytics_sessions/' + TEST_SID +
+                     '?key=' + AK + '&updateMask.fieldPaths=' + fieldPaths;
+      var pr = await fetch(patchUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: geoFields })
+      });
+      if (pr.ok) {
+        setRow('r-geo-patch', 'ok', 'PATCH с updateMask → ' + pr.status + '. Гео записано.');
+      } else {
+        var pt = await pr.text();
+        setRow('r-geo-patch', 'err', 'PATCH вернул ' + pr.status, pt);
+        errors.push('Patch гео: ' + pr.status + ' — ' + pt.slice(0,200));
+      }
+    } catch(e) {
+      setRow('r-geo-patch', 'err', 'Fetch ошибка: ' + e.message);
+      errors.push('Patch гео: ' + e.message);
+    }
+
+    // ── ВЕРИФИКАЦИЯ ──
+    await new Promise(function(r){ setTimeout(r, 1500); });
+    try {
+      var vr = await fetch(FS + '/analytics_sessions/' + TEST_SID + '?key=' + AK);
+      var vd = await vr.json();
+      var country = fsField((vd.fields||{}).country);
+      if (country) {
+        setRow('r-geo-verify', 'ok', 'Гео подтверждено в Firestore: country=' + country, JSON.stringify(vd.fields, null, 2));
+      } else {
+        setRow('r-geo-verify', 'err', 'Поле country не появилось в документе!', JSON.stringify(vd.fields, null, 2));
+        errors.push('Верификация гео: country отсутствует в документе');
+      }
+    } catch(e) {
+      setRow('r-geo-verify', 'err', 'Ошибка верификации: ' + e.message);
+    }
+  } else {
+    setRow('r-geo-patch', 'warn', 'Пропущено — нет данных от ip-api или запись сессии не удалась');
+    setRow('r-geo-verify', 'warn', 'Пропущено');
+  }
+
+  // ── 4. runQuery ──
+  setRow('r-query-sess', 'wait', 'runQuery analytics_sessions...');
+  try {
+    var cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    var qr = await fetch(FS.replace('/documents', '') + '/documents:runQuery?key=' + AK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ structuredQuery: {
+        from: [{ collectionId: 'analytics_sessions' }],
+        orderBy: [{ field: { fieldPath: 'ts' }, direction: 'DESCENDING' }],
+        limit: 10,
+        where: { fieldFilter: { field: { fieldPath: 'ts' },
+          op: 'GREATER_THAN_OR_EQUAL', value: { integerValue: String(cutoff) } } }
+      }})
+    });
+    if (qr.ok) {
+      var qa = await qr.json();
+      var docs = qa.filter(function(x){ return x && x.document; });
+      setRow('r-query-sess', 'ok', 'runQuery вернул ' + docs.length + ' сессий за 7 дней');
+
+      var withGeo = docs.filter(function(x){
+        return fsField((x.document.fields||{}).country);
+      });
+      if (withGeo.length > 0) {
+        setRow('r-query-geo', 'ok', withGeo.length + ' из ' + docs.length + ' сессий имеют country',
+          withGeo.slice(0,3).map(function(x){
+            var f = x.document.fields || {};
+            return fsField(f.country) + '/' + fsField(f.city) + ' — ' + fsField(f.br);
+          }).join('\n'));
+      } else {
+        setRow('r-query-geo', 'err', 'Ни одна из ' + docs.length + ' сессий не имеет поля country',
+          docs.slice(0,3).map(function(x){
+            return JSON.stringify(Object.keys(x.document.fields||{}));
+          }).join('\n'));
+        errors.push('Нет country ни в одной сессии');
+      }
+    } else {
+      var qt = await qr.text();
+      setRow('r-query-sess', 'err', 'runQuery вернул ' + qr.status, qt);
+      errors.push('runQuery: ' + qr.status);
+    }
+  } catch(e) {
+    setRow('r-query-sess', 'err', 'Fetch ошибка: ' + e.message);
+    errors.push('runQuery: ' + e.message);
+  }
+
+  // ── 5. ИТОГ ──
+  if (errors.length === 0) {
+    setRow('r-summary', 'ok', 'Все проверки пройдены. Система работает корректно.');
+  } else {
+    setRow('r-summary', 'err',
+      'Найдено ошибок: ' + errors.length,
+      errors.join('\n'));
+  }
+
+  document.getElementById('run-btn').disabled = false;
+}
+</script>
+</body>
+</html>
