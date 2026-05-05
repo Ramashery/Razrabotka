@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Digital Craft: Экспресс-диагностика</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; padding: 20px; color: #333; }
+        .test-item { margin-bottom: 10px; padding: 10px; border-radius: 5px; border-left: 5px solid #ccc; }
+        .success { border-left-color: #2ecc71; background: #eafaf1; }
+        .error { border-left-color: #e74c3c; background: #fdedec; }
+        .warning { border-left-color: #f1c40f; background: #fef9e7; }
+        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Диагностика сайта</h1>
+    <div id="results">Проверка запущена...</div>
+
+    <script>
+        async function runTests() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+
+            const addResult = (name, status, message) => {
+                const div = document.createElement('div');
+                div.className = `test-item ${status}`;
+                div.innerHTML = `<strong>${name}</strong>: ${message}`;
+                results.appendChild(div);
+            };
+
+            // 1. Проверка CORS и API (ваша главная проблема)
+            try {
+                const response = await fetch('https://razrabotka-2.onrender.com/geo?sid=test', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                if (response.ok) {
+                    addResult('CORS / API', 'success', 'Связь с сервером установлена успешно. Ошибок доступа нет.');
+                } else {
+                    addResult('CORS / API', 'error', `Сервер ответил кодом ${response.status}.`);
+                }
+            } catch (err) {
+                addResult('CORS / API', 'error', 'Ошибка CORS! Доступ к данным заблокирован политикой браузера. Googlebot видит пустую страницу.');
+            }
+
+            // 2. Проверка SSL и протокола
+            if (location.protocol === 'https:') {
+                addResult('Протокол', 'success', 'Используется защищенное соединение HTTPS.');
+            } else {
+                addResult('Протокол', 'error', 'Сайт работает по HTTP. Это критично для индексации в 2026 году.');
+            }
+
+            // 3. Скорость ответа (простая проверка)
+            const start = performance.now();
+            await fetch(location.href);
+            const end = performance.now();
+            const loadTime = Math.round(end - start);
+            if (loadTime < 500) {
+                addResult('Скорость TTFB', 'success', `${loadTime} мс. Сервер отвечает быстро.`);
+            } else {
+                addResult('Скорость TTFB', 'warning', `${loadTime} мс. Сервер подтормаживает.`);
+            }
+
+            // 4. Проверка Canonical
+            const canonical = document.querySelector('link[rel="canonical"]');
+            if (canonical) {
+                addResult('Canonical', 'success', `Тег найден: ${canonical.href}`);
+            } else {
+                addResult('Canonical', 'warning', 'Тег rel="canonical" не найден в разметке.');
+            }
+        }
+
+        runTests();
+    </script>
+</body>
+</html>
