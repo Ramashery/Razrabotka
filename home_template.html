@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="{{ home.lang or 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <script>
+      (function() {
+        var path = window.location.pathname;
+        var search = window.location.search;
+        var hash = window.location.hash;
+        try {
+            var decodedPath = decodeURIComponent(path);
+            var cleanPath = decodedPath.replace(/\/{2,}/g, '/').toLowerCase();
+            // Любой query-параметр (?...) обрезаем полностью — у канонических
+            // URL сайта их не бывает, поэтому редиректим на чистый адрес.
+            if (path !== cleanPath || search !== '') {
+                window.location.replace(cleanPath + hash);
+            }
+        } catch (e) {
+            console.error('URL normalization failed', e);
+        }
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{ home.seoTitle }}</title>
+    <meta name="description" content="{{ home.metaDescription }}">
+    <link rel="canonical" href="https://digital-craft-tbilisi.site/" />
+    <script>
+    (function () {
+        // Подстраховка на случай если GitHub Pages/edge-кэш отдал
+        // /index.html или /index вместо редиректа на канонический /.
+        var p = window.location.pathname;
+        if (p === '/index.html' || p === '/index') {
+            window.location.replace('/' + window.location.search + window.location.hash);
+        }
+    })();
+    </script>
+
+    <meta property="og:title" content="{{ home.ogTitle or home.seoTitle }}">
+    <meta property="og:description" content="{{ home.ogDescription or home.metaDescription }}">
+    <meta property="og:image" content="{{ home.ogImage or 'https://digital-craft-tbilisi.site/apple-touch-icon.png' }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://digital-craft-tbilisi.site/">
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.bunny.net/css?family=amaranth:400,400i,700,700i|asap-condensed:200,300i,400,400i,600,600i,700,700i,900,900i|kode-mono:400,500,600,700" rel="stylesheet" />
+
+    <!-- STYLES -->
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/new-carousel.css">
+    <!-- Стили редизайна главной. Подключены ПОСЛЕ styles.css, чтобы
+         переопределять токены только в рамках home-страницы (см. селектор
+         body:has(#rd-header) в начале redesign.css) — внутренние страницы
+         (template.html) styles.css не теряют и не подключают этот файл. -->
+    <link rel="stylesheet" href="/redesign.css?v={{ redesign_css_v }}">
+
+    {% if home.schemaJsonLd %}
+    <script type="application/ld+json">
+    {{ home.schemaJsonLd | tojson | safe }}
+    </script>
+    {% endif %}
+
+    <style>
+      :root { --main-visibility: visible !important; }
+      #ssr-carousel-source { display: none; }
+    </style>
+
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+</head>
+<body data-static-page="true">
+
+    {% if background_html %}
+    <iframe id="custom-background-iframe" title="Custom Background" class="is-visible" style="display:block;" srcdoc="{{ background_html | e }}"></iframe>
+    {% else %}
+    <iframe id="custom-background-iframe" title="Custom Background" style="display:none;"></iframe>
+    {% endif %}
+
+    <!-- ================= HEADER (sticky, mega-menu) ================= -->
+    <header id="rd-header">
+        <div class="rd-header-inner">
+            <a href="/" class="rd-logo">Digital Craft<span class="dot">.</span></a>
+            <nav class="rd-nav">{{ desktop_nav_html | safe }}</nav>
+            <a href="/#contact" class="cta cta-slide rd-nav-cta">
+                <span>Start a project</span>
+                <span class="ico">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 18l6-6-6-6"></path></svg>
+                </span>
+            </a>
+            <button class="menu-toggle" aria-label="Toggle menu">
+                <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+            </button>
+        </div>
+    </header>
+    <div class="nav-overlay">
+        <ul class="nav-menu">{{ menu_html | safe }}</ul>
+    </div>
+
+    <!-- TOC Wrapper -->
+    <div id="floating-toc-wrapper" class="floating-toc-wrapper" style="display: none;">
+        <button id="toc-toggle-btn" class="toc-toggle-btn" aria-expanded="false" aria-controls="toc-content-panel">
+            Table of Contents <span class="toc-arrow"></span>
+        </button>
+        <div id="toc-content-panel" class="toc-content-panel" aria-hidden="true"></div>
+    </div>
+
+    <main>
+
+        <!-- ================= HERO ================= -->
+        <section id="hero" class="rd-hero">
+            <canvas id="rd-hero-canvas" aria-hidden="true"></canvas>
+            <div class="rd-hero-inner">
+                <div class="rd-kicker animate-always is-visible"><span class="dot"></span>{{ hero.kicker }}</div>
+                <h1 class="animate-always is-visible">
+                    {{ home.h1 }}{% if hero.accent_word %} <em>{{ hero.accent_word }}</em>{% endif %}
+                </h1>
+                <div class="rd-hero-sub animate-always is-visible">
+                    {{ home.subtitle | safe }}
+                </div>
+                <div class="rd-hero-ctas animate-always is-visible">
+                    <a href="{{ hero.cta_primary_href }}" class="cta cta-slide">
+                        <span>{{ hero.cta_primary_label }}</span>
+                        <span class="ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 18l6-6-6-6"></path></svg></span>
+                    </a>
+                    <a href="{{ hero.cta_secondary_href }}" class="cta cta-ghost-slide">
+                        <span>{{ hero.cta_secondary_label }}</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= APPROACH (01, static) ================= -->
+        <section id="approach" class="rd-section">
+            <div class="rd-section-head">
+                <div class="rd-section-tag"><span class="num">01</span><span class="label">{{ approach.kicker }}</span></div>
+                <h2 class="rd-section-title">{{ approach.title }}</h2>
+            </div>
+            <div class="rd-section-body">
+                <div class="rd-approach-grid">
+                    <div class="rd-approach-text rd-reveal">
+                        <p>{{ approach.text }}</p>
+                    </div>
+                    <ul class="rd-approach-points rd-reveal">
+                        {% for point in approach.points %}
+                        <li><span class="n">{{ point.n }}</span><span>{{ point.text }}</span></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SERVICES (02) ================= -->
+        <section id="services" class="rd-section">
+            <div class="rd-section-head">
+                <div class="rd-section-tag"><span class="num">02</span><span class="label">Expertise</span></div>
+                <h2 class="rd-section-title">What we <em>build</em></h2>
+            </div>
+            <div class="rd-section-body">
+                {{ sections_html.services | safe }}
+            </div>
+        </section>
+
+        <!-- ================= INDUSTRIES (03, static) ================= -->
+        <section id="industries" class="rd-section">
+            <div class="rd-section-head">
+                <div class="rd-section-tag"><span class="num">03</span><span class="label">Industries</span></div>
+                <h2 class="rd-section-title">Sectors we know well</h2>
+            </div>
+            <div class="rd-section-body">
+                <div class="rd-industries-grid rd-reveal">
+                    {% for ind in industries %}
+                    <div class="rd-industry-card">
+                        <span class="num">{{ ind.num }}</span>
+                        <div>
+                            <h3>{{ ind.name }}</h3>
+                            <p>{{ ind.meta }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PORTFOLIO (04) ================= -->
+        <section id="portfolio" class="rd-section">
+            <div class="rd-section-head">
+                <div class="rd-section-tag"><span class="num">04</span><span class="label">Work</span></div>
+                <h2 class="rd-section-title">Recent <em>projects</em></h2>
+            </div>
+            <div class="rd-section-body">
+                {{ sections_html.portfolio | safe }}
+            </div>
+        </section>
+
+        <!-- ================= BLOG (05) ================= -->
+        <section id="blog" class="rd-section">
+            <div class="rd-section-head">
+                <div class="rd-section-tag"><span class="num">05</span><span class="label">Resources</span></div>
+                <h2 class="rd-section-title">Notes &amp; writing</h2>
+            </div>
+            <div class="rd-section-body">
+                {{ sections_html.blog | safe }}
+            </div>
+        </section>
+
+        <!-- ================= CONTACT / CTA (06) ================= -->
+        <section id="contact" class="rd-section">
+            <div class="rd-section-head">
+                <div class="rd-section-tag"><span class="num">06</span><span class="label">Contact</span></div>
+            </div>
+            <div class="rd-section-body">
+                <div class="rd-cta-grid">
+                    <h2 class="rd-cta-title">Got a project?<br>Let's talk.</h2>
+                    <div class="rd-cta-sub-wrap">
+                        <p class="rd-cta-sub">A free 30-minute first conversation, no strings attached.</p>
+                        {{ sections_html.contact | safe }}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="rd-footer" id="site-footer">
+        <div class="rd-footer-inner">
+            <a href="/" class="rd-logo">Digital Craft<span class="dot">.</span></a>
+            <nav class="rd-footer-nav">{{ footer_nav_html | safe }}</nav>
+        </div>
+        <div class="rd-footer-bottom" onclick="window.location.href='/admin.html'">
+            <span>{{ footer_html | safe }}</span>
+            <span>Tbilisi, Georgia</span>
+        </div>
+    </footer>
+
+    <script type="module" src="/main.js?v={{ main_js_v }}"></script>
+    <script type="module" src="/new-carousel.js?v={{ carousel_js_v }}"></script>
+
+    <!-- Yandex Metrika -->
+    <script type="text/javascript">
+        function loadYandexMetrika() {
+            (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+            (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+            ym(103413242, "init", {
+                 clickmap:true,
+                 trackLinks:true,
+                 accurateTrackBounce:true,
+                 webvisor:true
+            });
+        }
+        setTimeout(loadYandexMetrika, 4500);
+    </script>
+
+</body>
+</html>
