@@ -1,0 +1,243 @@
+/* =========================================================================
+   redesign-home.css
+   Слой редизайна главной страницы поверх styles.css.
+   Палитра НЕ меняется — используются те же переменные:
+   --color-bg, --color-text, --color-accent, --color-card, --color-border,
+   --font-main, --font-code (определены в styles.css :root).
+
+   Этот файл НЕ трогает .item-card / .desktop-* / .mobile-* / .slider-*
+   — эта разметка генерируется Python (generate_site.py) и управляется
+   main.js (карусели, lazy-load фонов, cross-fade). Здесь только новая
+   "упаковка": hero, section-маркеры, крупная редакционная типографика,
+   переходы между секциями и scroll-анимации на новых элементах.
+   ========================================================================= */
+
+:root {
+    --font-display: 'Fraunces', Georgia, serif;
+    --section-pad-x: clamp(24px, 6vw, 96px);
+    --section-pad-y: clamp(72px, 12vw, 140px);
+}
+
+/* -------------------------------------------------------------------------
+   Общие scroll-reveal стили для новых элементов.
+   Используем тот же контракт, что и остальной сайт: класс animate-on-scroll
+   ставится в разметке, а main.js (через animateOnceObserver) добавляет
+   is-visible при появлении элемента в вьюпорте. Ничего в JS менять не нужно.
+   ------------------------------------------------------------------------- */
+.hero-eyebrow,
+.hero-title,
+.hero-subtitle-container,
+.hero-scroll-cue,
+.section-marker,
+.section-tag {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1);
+}
+.hero-eyebrow.is-visible,
+.hero-title.is-visible,
+.hero-subtitle-container.is-visible,
+.hero-scroll-cue.is-visible,
+.section-marker.is-visible,
+.section-tag.is-visible,
+/* animate-always элементы уже помечены is-visible в разметке, но на случай
+   если main.js их тоже прогоняет через observer — подстрахуемся классом-условием */
+.animate-always.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+    .hero-eyebrow, .hero-title, .hero-subtitle-container,
+    .hero-scroll-cue, .section-marker, .section-tag {
+        transition: none;
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* =========================================================================
+   HERO
+   ========================================================================= */
+.hero.hero--redesign {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: var(--section-pad-y) var(--section-pad-x);
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.hero-bg-grid {
+    position: absolute;
+    inset: -10%;
+    z-index: -1;
+    opacity: 0.05;
+    background-image:
+        linear-gradient(var(--color-border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse 80% 60% at 30% 40%, black, transparent 75%);
+}
+
+.mono-tag {
+    font-family: var(--font-code);
+    font-size: 11px;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    opacity: .85;
+}
+
+.hero-title {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-style: normal;
+    font-size: clamp(38px, 7.2vw, 108px);
+    line-height: .96;
+    letter-spacing: -0.02em;
+    margin: 22px 0 28px;
+    max-width: 17ch;
+    color: var(--color-text);
+}
+
+.hero-subtitle-container {
+    font-family: var(--font-main);
+    font-size: clamp(16px, 1.7vw, 20px);
+    line-height: 1.6;
+    max-width: 58ch;
+    opacity: .85;
+}
+
+.hero-scroll-cue {
+    position: absolute;
+    bottom: clamp(24px, 4vw, 44px);
+    left: var(--section-pad-x);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-code);
+    font-size: 10px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--color-text);
+    opacity: .5;
+}
+.hero-scroll-cue i {
+    width: 1px;
+    height: 32px;
+    background: var(--color-accent);
+    display: block;
+    animation: scrollPulse 2.4s ease-in-out infinite;
+    transform-origin: top;
+}
+@keyframes scrollPulse {
+    0%, 100% { transform: scaleY(.35); opacity: .35; }
+    50%      { transform: scaleY(1);   opacity: 1;   }
+}
+@media (prefers-reduced-motion: reduce) {
+    .hero-scroll-cue i { animation: none; opacity: .6; }
+}
+
+/* =========================================================================
+   SECTIONS (services / portfolio / blog / contact)
+   ========================================================================= */
+.site-section {
+    position: relative;
+    padding: var(--section-pad-y) var(--section-pad-x);
+    overflow: hidden;
+}
+
+/* Тонкая линия-разделитель сверху каждой секции — вместо жёсткой границы */
+.site-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: var(--section-pad-x);
+    right: var(--section-pad-x);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+}
+
+/* Лёгкое чередование глубины фона — секции "дышат", не сливаясь в одну плоскость */
+.site-section:nth-of-type(even) {
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(184, 216, 232, 0.02) 50%,
+        transparent 100%
+    );
+}
+
+.section-marker {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+.section-marker__index {
+    font-family: var(--font-code);
+    font-size: 12px;
+    color: var(--color-accent);
+    opacity: .7;
+}
+.section-marker__label {
+    font-family: var(--font-code);
+    font-size: 11px;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: var(--color-text);
+    opacity: .5;
+}
+
+.section-tag {
+    font-family: var(--font-main);
+    font-size: 14px;
+    opacity: .55;
+    margin-bottom: clamp(28px, 4vw, 48px);
+}
+
+/* Заголовки секций рендерятся Python-ом (render_home_section_html) как
+   обычный <h2 class="animate-on-scroll is-visible">Title</h2> прямо перед
+   сеткой карточек — переопределяем их вид здесь, разметку не трогаем. */
+#services > h2,
+#portfolio > h2,
+#blog > h2,
+#contact > h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(30px, 4.4vw, 58px);
+    line-height: 1.04;
+    letter-spacing: -0.01em;
+    max-width: 20ch;
+    color: var(--color-text);
+    margin: 0 0 clamp(32px, 5vw, 56px);
+}
+
+/* -------------------------------------------------------------------------
+   Небольшая доводка карточек под редакционную эстетику — только hover/тень,
+   структура и классы, за которые отвечает main.js, не меняются.
+   ------------------------------------------------------------------------- */
+.item-card {
+    border-radius: 4px;
+}
+
+/* Контактная секция — чуть плотнее нижний паддинг перед футером */
+.site-section--contact {
+    padding-bottom: clamp(56px, 8vw, 96px);
+}
+
+/* =========================================================================
+   RESPONSIVE
+   ========================================================================= */
+@media (max-width: 720px) {
+    .hero.hero--redesign {
+        min-height: 92svh;
+        padding-top: 96px;
+    }
+    .hero-scroll-cue { display: none; }
+    .site-section { padding-top: 72px; padding-bottom: 72px; }
+}
