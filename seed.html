@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed: Add Animation Fields</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  body { font-family: -apple-system, Arial, sans-serif; background:#111; color:#eee; padding:24px; max-width:480px; margin:0 auto; }
+  h1 { font-size:1.2rem; }
+  input { width:100%; padding:12px; margin:6px 0; box-sizing:border-box; border-radius:6px; border:1px solid #444; background:#1c1c1c; color:#eee; }
+  button { width:100%; padding:14px; margin-top:12px; border:none; border-radius:6px; background:#3b82f6; color:#fff; font-size:1rem; cursor:pointer; }
+  button:disabled { opacity:0.5; }
+  pre { white-space:pre-wrap; word-break:break-word; background:#1c1c1c; padding:12px; border-radius:6px; font-size:0.85rem; }
+  .ok { color:#4ade80; }
+  .err { color:#f87171; }
+</style>
+
+<!-- Firebase SDK: та же версия, что и в admin.js -->
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<h1>Seed: добавление полей анимации в Firestore</h1>
+<p>Этот файл разово добавляет в документ <code>home/content</code> три новых пустых поля:
+<code>heroAnimationHtml</code>, <code>menuAnimationHtml</code>, <code>footerAnimationHtml</code>.
+Существующие поля (в т.ч. <code>backgroundHtml</code>) не трогает.</p>
+
+<form id="login-form">
+  <input type="email" id="email" placeholder="Admin email" required autocomplete="username">
+  <input type="password" id="password" placeholder="Admin password" required autocomplete="current-password">
+  <button type="submit" id="run-btn">Войти и внести изменения</button>
+</form>
+
+<pre id="log">Ожидание...</pre>
+
+<script>
+// --- Тот же конфиг, что и в admin.js ---
+const firebaseConfig = {
+    apiKey: "AIzaSyAT4dDEIDUtzP60ibjahO06P75Q6h95ZN4",
+    authDomain: "razrabotka-b61bc.firebaseapp.com",
+    projectId: "razrabotka-b61bc",
+    storageBucket: "razrabotka-b61bc.firebasestorage.app",
+    messagingSenderId: "394402564794",
+    appId: "1:394402564794:web:f610ffb03e655c600c5083"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+const logEl = document.getElementById('log');
+const runBtn = document.getElementById('run-btn');
+function log(msg, cls) {
+    const line = document.createElement('div');
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+}
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    runBtn.disabled = true;
+    logEl.textContent = '';
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    try {
+        log('Вход в аккаунт...');
+        await auth.signInWithEmailAndPassword(email, password);
+        log('✓ Вход выполнен.', 'ok');
+
+        const docRef = db.collection('home').doc('content');
+        const snap = await docRef.get();
+
+        if (!snap.exists) {
+            throw new Error('Документ home/content не найден. Проверьте, что сайт уже был один раз опубликован через админ-панель.');
+        }
+
+        const data = snap.data();
+        const fieldsToAdd = ['heroAnimationHtml', 'menuAnimationHtml', 'footerAnimationHtml'];
+        const patch = {};
+        fieldsToAdd.forEach(field => {
+            if (typeof data[field] === 'undefined') {
+                patch[field] = '';
+            }
+        });
+
+        if (Object.keys(patch).length === 0) {
+            log('Все поля уже существуют — изменений не требуется.', 'ok');
+        } else {
+            log('Добавляю поля: ' + Object.keys(patch).join(', ') + ' ...');
+            await docRef.set(patch, { merge: true });
+            log('✓ Готово! Поля добавлены в home/content.', 'ok');
+        }
+
+        log('Можно закрыть эту страницу и удалить seed.html с сайта.');
+    } catch (err) {
+        console.error(err);
+        log('✗ Ошибка: ' + err.message, 'err');
+        if (err.code === 'permission-denied' || (err.message || '').includes('insufficient permissions')) {
+            log('Похоже, правила Firestore не разрешают запись этому аккаунту. См. инструкцию FIRESTORE_SEED_INSTRUCTIONS.md.', 'err');
+        }
+    } finally {
+        runBtn.disabled = false;
+    }
+});
+</script>
+</body>
+</html>
