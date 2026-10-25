@@ -45,7 +45,7 @@ except Exception as e:
 OUTPUT_DIR = 'public'
 # Обновлено под GitHub Pages (адрес репозитория)
 BASE_URL = "https://ramashery.github.io/Razrabotka"
-SITE_PREFIX = "/Razrabotka"
+SITE_PREFIX = "/razrabotka"
 
 SUPPORTED_LANGS = ['en', 'ka', 'ru', 'uk']
 SITEMAP_DEFAULTS = {
